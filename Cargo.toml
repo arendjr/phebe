@@ -1,0 +1,15 @@
+[package]
+name = "phebe"
+version = "0.1.0"
+authors = ["Arend van Beelen jr. <arendjr@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+bytes = "0.5"
+hyper = "0.13"
+lazy_static = "1.4.0"
+maplit = "1.0.2"
+palette = "0.5.0"
+tokio = { version = "0.2", features = ["full"] }
+typed-html = "0.2.2"
+v_htmlescape = "0.4.5"

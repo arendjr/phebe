@@ -1,0 +1,27 @@
+/* [118] */
+@font-face {
+  font-family: "Noto Sans JP";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Noto Sans Japanese Regular"), local("NotoSansJapanese-Regular"),
+    url(https://fonts.gstatic.com/s/notosansjp/v25/-F62fjtqLzI2JPCgQBnw7HFow2oe2EcP5pp0erwTqsSWs9Jezazjcb4.118.woff2)
+      format("woff2");
+  unicode-range: U+21-22, U+27-2a, U+2c-3b, U+3f, U+41-4d, U+4f-5d, U+61-7b,
+    U+7d, U+ab, U+ae, U+b2-b3, U+b7, U+bb, U+c9, U+d6, U+d8, U+dc, U+e0-e5,
+    U+e7-ed, U+ef, U+f1-f4, U+f6, U+f8, U+fa, U+fc-fd, U+103, U+14d, U+1b0,
+    U+1ebf, U+1ec7, U+2013-2014, U+201c-201d, U+2039-203a, U+203c, U+2048-2049,
+    U+2113, U+2122, U+65e5, U+6708, U+70b9;
+}
+
+/* [119] */
+@font-face {
+  font-family: "Noto Sans JP";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Noto Sans Japanese Regular"), local("NotoSansJapanese-Regular"),
+    url(https://fonts.gstatic.com/s/notosansjp/v25/-F62fjtqLzI2JPCgQBnw7HFow2oe2EcP5pp0erwTqsSWs9Jezazjcb4.119.woff2)
+      format("woff2");
+  unicode-range: U+20, U+3001-3002, U+3041-307f, U+3081-308f, U+3091-3093,
+    U+3099-309a, U+309d-309e, U+30a1-30e1, U+30e3-30ed, U+30ef-30f0, U+30f2-30f4,
+    U+30fb-30fe, U+ff0c, U+ff0e;
+}
