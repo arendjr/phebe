@@ -30,7 +30,7 @@ impl<'a> Document<'a> {
 impl<'a> fmt::Display for Document<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let head = format!(
-            "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><style>{} {} {}</style></head>",
+            "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><style>{} {} {}</style><script defer src=\"/main.js\" type=\"module\"></script></head>",
             *NOTO_SANS_JP_CSS,
             *MAIN_CSS,
             generate_css(self.color_scheme)

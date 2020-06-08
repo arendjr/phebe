@@ -13,6 +13,7 @@ lazy_static! {
             "people" => "#969f5a",
             "projects" => "#768036",
             "articles" => "#3f2310",
+            "contact" => "#1c2723",
         },
     };
     static ref DARK_COLOR_SCHEME: ColorScheme = ColorScheme {
@@ -23,6 +24,7 @@ lazy_static! {
             "people" => "#969f5a",
             "projects" => "#768036",
             "articles" => "#eebf58",
+            "contact" => "#c1c4c3",
         },
     };
 }

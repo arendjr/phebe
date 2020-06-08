@@ -716,6 +716,8 @@ dependencies = [
  "lazy_static",
  "maplit",
  "palette",
+ "serde",
+ "serde_json",
  "tokio",
  "typed-html",
  "v_htmlescape",
@@ -1066,6 +1068,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ryu"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+
+[[package]]
 name = "serde"
 version = "1.0.111"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1083,6 +1091,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.53"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "993948e75b189211a9b31a7528f950c6adc21f9720b6438ff80a7fa2f864cea2"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
 ]
 
 [[package]]

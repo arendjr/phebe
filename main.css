@@ -1,77 +1,77 @@
 * {
-  box-sizing: border-box;
-  font-family: "Noto Sans JP", sans-serif;
-  font-weight: 300;
-}
-.dark-turquoise {
-  color: #1c2723;
+    box-sizing: border-box;
+    font-family: "Noto Sans JP", sans-serif;
+    font-weight: 300;
 }
 body {
-  align-content: flex-start;
-  color: #111;
-  display: flex;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
+    align-content: flex-start;
+    color: #111;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+}
+a {
+    transition: color 2s ease-in-out, opacity 0.4s ease-in;
 }
 
 .theme-selector {
-  font-size: 0.9rem;
-  opacity: 0.5;
-  padding: 0.5rem;
-  position: absolute;
-  right: 0;
-  top: 0;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    padding: 0.5rem;
+    position: absolute;
+    right: 0;
+    top: 0;
 }
 .theme-selector:hover {
-  opacity: 0.9;
+    opacity: 0.9;
 }
 
 .menu {
-  display: block;
-  margin: 0;
-  padding: 8rem 4rem 4rem;
-  width: 12rem;
+    display: block;
+    margin: 0;
+    padding: 8rem 4rem 4rem;
+    width: 12rem;
 }
 .menu > li {
-  display: block;
+    display: block;
 }
 .menu > li > a {
-  opacity: 0.6;
-  text-decoration: none;
+    opacity: 0.6;
+    text-decoration: none;
 }
 .menu > li > a.active {
-  opacity: 1;
+    opacity: 1;
 }
 .menu > li > a:hover:not(.active) {
-  opacity: 0.9;
-  text-decoration: underline;
+    opacity: 0.9;
+    text-decoration: underline;
 }
 
 .content {
-  flex-grow: 1;
-  margin: 0;
-  max-width: 32rem;
-  padding: 4rem;
+    flex-grow: 1;
+    margin: 0;
+    max-width: 32rem;
+    padding: 4rem;
 }
 h1 {
-  font-size: 2rem;
-  margin: 1rem 0;
-  margin-block-start: 0;
-  margin-block-end: 0;
+    font-size: 2rem;
+    margin: 1rem 0;
+    margin-block-start: 0;
+    margin-block-end: 0;
 }
 p {
-  font-size: 1rem;
-  margin: 1rem 0;
+    font-size: 1rem;
+    margin: 1rem 0;
 }
 
 @media (max-width: 44rem) {
-  .content {
-    max-width: auto;
-    padding: 1rem;
-  }
-  .menu {
-    padding: 1rem;
-    width: auto;
-  }
+    .content {
+        max-width: auto;
+        padding: 1rem;
+    }
+    .menu {
+        padding: 1rem;
+        width: auto;
+    }
 }
