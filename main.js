@@ -1,42 +1,56 @@
-const pages = new Map();
+const menuLinks = document.querySelectorAll(".menu a");
 
-function loadPage(href) {
-    if (!pages.has(href)) {
-        pages.set(
-            href,
-            fetch(href, {
+const pages = new Map();
+pages.set(location.pathname, { pageClass: document.body.className });
+
+function loadPage(href, pageClass) {
+    if (!pages.has(href) || !pages.get(href).promise) {
+        pages.set(href, {
+            pageClass,
+            promise: fetch(href, {
                 headers: { Accept: "application/json" },
-            }).then(response => response.json())
-        );
+            }).then(response => response.json()),
+        });
     }
-    return pages.get(href);
+    return pages.get(href).promise;
 }
 
-const menuLinks = document.querySelectorAll(".menu a");
+function navigateTo(href, pageClass) {
+    menuLinks.forEach(a => a.classList.remove("active"));
+
+    loadPage(href, pageClass)
+        .then(({ content }) => {
+            document.body.className = pageClass;
+            document
+                .querySelector(".menu a." + pageClass)
+                .classList.add("active");
+            document.querySelector(".content").outerHTML = content;
+        })
+        .catch(error => {
+            console.error(
+                "Failed to load page; fall back to full-page reload",
+                error
+            );
+            window.location = href;
+        });
+}
+
 menuLinks.forEach(a => {
     a.addEventListener("click", event => {
         event.preventDefault();
 
-        menuLinks.forEach(a => a.classList.remove("active"));
-        document.body.className = a.className;
-        a.classList.add("active");
-
-        loadPage(a.getAttribute("href"))
-            .then(({ content }) => {
-                document.querySelector(".content").outerHTML = content;
-            })
-            .catch(error => {
-                console.error(
-                    "Failed to load page; fall back to full-page reload",
-                    error
-                );
-                window.location = a.getAttribute("href");
-            });
+        history.pushState(null, document.head.title, a.getAttribute("href"));
+        navigateTo(a.getAttribute("href"), a.className);
     });
 
     a.addEventListener("mouseenter", () => {
         if (!a.classList.contains("active")) {
-            loadPage(a.getAttribute("href"));
+            loadPage(a.getAttribute("href"), a.className);
         }
     });
 });
+
+window.onpopstate = event => {
+    event.preventDefault();
+    navigateTo(location.pathname, pages.get(location.pathname).pageClass);
+};

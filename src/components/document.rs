@@ -9,8 +9,7 @@ use super::color_scheme::{generate_css, PreferredColorScheme};
 
 lazy_static! {
     static ref MAIN_CSS: String = fs::read_to_string("main.css").expect("Could not read main CSS");
-    static ref NOTO_SANS_JP_CSS: String =
-        fs::read_to_string("noto-sans-jp.css").expect("Could not read font CSS");
+    static ref FONT_CSS: String = fs::read_to_string("fonts.css").expect("Could not read font CSS");
 }
 
 pub struct Document<'a> {
@@ -31,7 +30,7 @@ impl<'a> fmt::Display for Document<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let head = format!(
             "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><style>{} {} {}</style><script defer src=\"/main.js\" type=\"module\"></script></head>",
-            *NOTO_SANS_JP_CSS,
+            *FONT_CSS,
             *MAIN_CSS,
             generate_css(self.color_scheme)
         );

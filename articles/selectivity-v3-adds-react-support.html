@@ -1,0 +1,39 @@
+<h1>Selectivity v3 adds React support</h1>
+<p>
+    From the start, Selectivity has been developed as a jQuery plugin. It used
+    jQuery internally as well as exposed a typical jQuery plugin API. But given
+    that my own use cases involve more and more React, I wanted to bring
+    Selectivity along into a world where using jQuery is no longer a given. The
+    past few months I've gradually rewritten the Selectivity internals so they
+    became independent of jQuery. It was quite a bit of work, with nothing
+    really to show for it...
+</p>
+<p>
+    But today I released
+    <a href="https://github.com/arendjr/selectivity/releases/tag/3.0.0-beta1">
+        Selectivity v3.0.0-beta1</a
+    >
+    with the official React API! When you download this latest release, you can
+    simply choose to use the jQuery bundle or the React bundle and each comes
+    with its appropriate API and plugins. If you're adventurous, you can even
+    use the VanillaJS bundle that depends on neither library. I have updated the
+    <a href="https://arendjr.github.io/selectivity/">Selectivity homepage</a> to
+    (hopefully) make it clear how to use each API.
+</p>
+<p>
+    Also new (or at least: finally usable) is the NPM release. I have added
+    extensive instructions on
+    <a href="https://github.com/arendjr/selectivity#using-npm"
+        >how to use the NPM release</a
+    >
+    on the GitHub project page. I have to admit having a triple-API model
+    certainly makes things more complicated in that area. But then again, the
+    alternative would be to create separate projects for each API and each
+    plugin, and I would be stuck with 13 projects to maintain. I guess it would
+    certainly be more in the spirit of NPM, but I hope I struck a good balance
+    here :)
+</p>
+<p>
+    I'd be happy to receive bug reports and suggestions for improvements (not in
+    the least when it comes to the documentation!). Cheers!
+</p>

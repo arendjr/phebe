@@ -15,7 +15,7 @@ use std::net::SocketAddr;
 use typed_html::dom::DOMTree;
 use typed_html::elements::FlowContent;
 use typed_html::types::{Class, SpacedSet};
-use typed_html::{html, text};
+use typed_html::{html, text, unsafe_text};
 
 mod components;
 use components::{Document, PreferredColorScheme};
@@ -23,6 +23,12 @@ use components::{Document, PreferredColorScheme};
 #[derive(Serialize, Debug)]
 struct JsonPage {
     content: String,
+}
+
+struct PageDef {
+    page: &'static str,
+    href: &'static str,
+    content: Box<dyn FlowContent<String>>,
 }
 
 lazy_static! {
@@ -39,12 +45,49 @@ lazy_static! {
         generate_static_pages(PreferredColorScheme::Unspecified);
 }
 
+fn get_page_defs() -> Vec<PageDef> {
+    vec![
+        PageDef {
+            page: "me",
+            href: "/",
+            content: generate_index_content(),
+        },
+        PageDef {
+            page: "people",
+            href: "/people",
+            content: generate_people_content(),
+        },
+        PageDef {
+            page: "projects",
+            href: "/projects",
+            content: generate_projects_content(),
+        },
+        PageDef {
+            page: "articles",
+            href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
+            content: generate_article_content("how-i-made-text-clipper-fastest-html"),
+        },
+        PageDef {
+            page: "articles",
+            href: "/2016/08/selectivity-v3-adds-react-support.html",
+            content: generate_article_content("selectivity-v3-adds-react-support"),
+        },
+    ]
+}
+
 fn generate_json_pages() -> HashMap<&'static str, Bytes> {
     let mut pages = HashMap::new();
 
-    pages.insert("/", generate_json_page(generate_index_content));
-    pages.insert("/people", generate_json_page(generate_people_content));
-    pages.insert("/projects", generate_json_page(generate_projects_content));
+    for page_def in get_page_defs() {
+        pages.insert(
+            page_def.href,
+            serde_json::to_string(&JsonPage {
+                content: page_def.content.to_string(),
+            })
+            .unwrap()
+            .into(),
+        );
+    }
 
     pages
 }
@@ -52,43 +95,28 @@ fn generate_json_pages() -> HashMap<&'static str, Bytes> {
 fn generate_static_pages(color_scheme: PreferredColorScheme) -> HashMap<&'static str, Bytes> {
     let mut pages = HashMap::new();
 
-    pages.insert(
-        "/",
-        generate_document("me", generate_index_content, color_scheme),
-    );
-    pages.insert(
-        "/people",
-        generate_document("people", generate_people_content, color_scheme),
-    );
-    pages.insert(
-        "/projects",
-        generate_document("projects", generate_projects_content, color_scheme),
-    );
+    for page_def in get_page_defs() {
+        pages.insert(
+            page_def.href,
+            generate_document(page_def.page, page_def.content, color_scheme),
+        );
+    }
 
     pages
 }
 
 fn generate_document(
     page: &str,
-    generate_content: impl Fn() -> Box<dyn FlowContent<String>>,
+    content: Box<dyn FlowContent<String>>,
     color_scheme: PreferredColorScheme,
 ) -> Bytes {
     let mut body: DOMTree<String> = html!(<body class={page}>
         {generate_theme_selector()}
         {generate_menu(page)}
-        {generate_content()}
+        {content}
     </body>);
     let doc = Document::new(body.vnode(), color_scheme);
     doc.to_string().into()
-}
-
-fn generate_json_page(generate_content: impl Fn() -> Box<dyn FlowContent<String>>) -> Bytes {
-    let content = generate_content();
-    serde_json::to_string(&JsonPage {
-        content: content.to_string(),
-    })
-    .unwrap()
-    .into()
 }
 
 fn generate_menu(active_page: &str) -> Box<dyn FlowContent<String>> {
@@ -119,6 +147,14 @@ fn generate_theme_selector() -> Box<dyn FlowContent<String>> {
     html!(<div class="theme-selector">
         <a class="dark" href="?preferred_color_scheme=dark">"Dark theme"</a>
         <a class="light" href="?preferred_color_scheme=light">"Light theme"</a>
+    </div>)
+}
+
+fn generate_article_content(filename: &'static str) -> Box<dyn FlowContent<String>> {
+    let content =
+        fs::read_to_string(format!("articles/{}.html", filename)).expect("Could not read article");
+    html!(<div class="content">
+        {unsafe_text!(content)}
     </div>)
 }
 
