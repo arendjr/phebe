@@ -1,0 +1,74 @@
+<p>
+    <b>Update:</b> This post mentioned the release of Select3 v1.0. The project
+    has since been renamed to Selectivity.js and all references in this post
+    have been updated.
+</p>
+<p>
+    After a little over two months of development, I'm proud to announce the
+    first stable release of
+    <a href="https://arendjr.github.io/selectivity/">Selectivity.js</a>. This
+    release follows shortly after we have started using Selectivity in
+    production at <a href="https://www.speakap.com/">Speakap</a>, meaning we
+    believe it is stable enough to expose our users to it :)
+</p>
+<p>
+    Selectivity.js is a library for displaying rich select boxes. It is intended
+    to be lightweight and flexible and has a modular design, a build system for
+    creating custom builds and a proper test suite.
+</p>
+<h2>New Features</h2>
+<p>
+    Some noteworthy features have been added to the library over the past month:
+</p>
+<ul>
+    <li>
+        Support for submenus, as described in
+        <a href="/2015/02/creating-submenus-with-select3.html"
+            >a previous blog post</a
+        >.
+    </li>
+    <li>
+        An AJAX module, for conveniently performing AJAX requests to fetch
+        remote data.
+    </li>
+    <li>
+        An async module, which detects out-of-order responses to requests and
+        discards those that are no longer relevant. This is especially useful in
+        combination with the AJAX module, but can also be used independently.
+    </li>
+    <li>
+        Selectivity.js now automatically fetches more results when the user
+        scrolls to the "Load more" link a dropdown.
+    </li>
+    <li>
+        Dropdowns now detect whether there is enough room to be displayed at the
+        bottom of the screen and expand upwards if necessary.
+    </li>
+</ul>
+<h2>What's Next?</h2>
+<p>
+    Now that Selectivity has been released with its first stable release, it is
+    expected the development of additional features will settle down.
+    Maintenance will continue in the form of bug fixes. Some minor features and
+    accessibility enhancements are to be expected, but nothing that will break
+    the API short-term.
+</p>
+<p>
+    Instead, I intend to shift focus to extending the ecosystem around
+    Selectivity.js. For example, I expect to shortly start working on a React.js
+    Component for working with Selectivity. Also some specific customizations
+    will be released in the form of plugins or add-on modules. Such work will be
+    performed in separate repositories and not in the Selectivity.js repository
+    however.
+</p>
+<h2>Questions and Suggestions</h2>
+<p>
+    If you have any questions about working with Selectivity.js, feel free to
+    post them on <a href="http://stackoverflow.com/">Stack Overflow</a> using
+    the "Selectivity" tag. Features requests and other suggestions are welcome
+    in the
+    <a href="https://github.com/arendjr/selectivity/issues"
+        >GitHub issue tracker</a
+    >.
+</p>
+<p>Cheers!</p>

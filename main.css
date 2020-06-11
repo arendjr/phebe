@@ -73,10 +73,11 @@ p {
     margin: 1rem 0;
 }
 .alternate-a {
+    padding-left: 1rem;
     padding-right: 3rem;
 }
 .alternate-b {
-    padding-left: 3rem;
+    padding-left: 4rem;
 }
 
 @media (max-width: 44rem) {

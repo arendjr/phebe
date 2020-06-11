@@ -66,7 +66,17 @@ fn get_article_defs() -> Vec<ArticleDef> {
         ArticleDef {
             href: "/2015/05/selectivityjs-v110-improves-keyboard.html",
             filename: "selectivityjs-v110-improves-keyboard",
-            title: "Selectivity.js v1.1.0 improves keyboard support, adds Ruby Gem",
+            title: "Selectivity v1.1.0 improves keyboard support, adds Ruby Gem",
+        },
+        ArticleDef {
+            href: "/2015/03/select3-v10-released.html",
+            filename: "select3-v10-released",
+            title: "Selectivity v1.0 released",
+        },
+        ArticleDef {
+            href: "/2015/02/creating-submenus-with-select3.html",
+            filename: "creating-submenus-with-select3",
+            title: "Creating submenus with Selectivity.js",
         },
     ]
 }
@@ -97,7 +107,7 @@ fn get_page_defs() -> Vec<PageDef> {
 
     for article_def in get_article_defs() {
         pages.push(PageDef {
-            page: "article",
+            page: "articles",
             href: article_def.href,
             content: generate_article_content(&article_def),
         });
@@ -141,12 +151,12 @@ fn generate_document(
     content: Box<dyn FlowContent<String>>,
     color_scheme: PreferredColorScheme,
 ) -> Bytes {
-    let mut body: DOMTree<String> = html!(<body class={page}>
+    let body: DOMTree<String> = html!(<body class={page}>
         {generate_theme_selector()}
         {generate_menu(page)}
         {content}
     </body>);
-    let doc = Document::new(body.vnode(), color_scheme);
+    let doc = Document::new(body, color_scheme);
     doc.to_string().into()
 }
 

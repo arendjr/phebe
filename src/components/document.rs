@@ -1,9 +1,7 @@
 use lazy_static::lazy_static;
 use std::fmt;
 use std::fs;
-use typed_html::dom::VNode;
-use typed_html::OutputType;
-use v_htmlescape::escape;
+use typed_html::dom::DOMTree;
 
 use super::color_scheme::{generate_css, PreferredColorScheme};
 
@@ -12,13 +10,13 @@ lazy_static! {
     static ref FONT_CSS: String = fs::read_to_string("fonts.css").expect("Could not read font CSS");
 }
 
-pub struct Document<'a> {
-    body: VNode<'a, String>,
+pub struct Document {
+    body: DOMTree<String>,
     color_scheme: PreferredColorScheme,
 }
 
-impl<'a> Document<'a> {
-    pub fn new(body: VNode<'a, String>, color_scheme: PreferredColorScheme) -> Document<'a> {
+impl Document {
+    pub fn new(body: DOMTree<String>, color_scheme: PreferredColorScheme) -> Document {
         Document {
             body: body,
             color_scheme: color_scheme,
@@ -26,7 +24,7 @@ impl<'a> Document<'a> {
     }
 }
 
-impl<'a> fmt::Display for Document<'a> {
+impl<'a> fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let head = format!(
             "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><style>{} {} {}</style><script defer src=\"/main.js\" type=\"module\"></script></head>",
@@ -39,33 +37,7 @@ impl<'a> fmt::Display for Document<'a> {
             f,
             "<!DOCTYPE><html>{}{}</html>",
             head,
-            vnode_to_string(&self.body)
+            self.body.to_string()
         )
-    }
-}
-
-fn vnode_to_string<T: OutputType>(node: &VNode<T>) -> String {
-    match node {
-        VNode::Element(element) => format!(
-            "<{}{}>{}</{}>",
-            element.name,
-            element
-                .attributes
-                .iter()
-                .fold(String::new(), |mut result, (key, value)| -> String {
-                    result.push_str(&format!(" {}=\"{}\"", key, escape(value)));
-                    result
-                }),
-            element
-                .children
-                .iter()
-                .fold(String::new(), |mut result, node| -> String {
-                    result.push_str(&vnode_to_string(node));
-                    result
-                }),
-            element.name
-        ),
-        VNode::Text(text) => escape(text).to_string(),
-        VNode::UnsafeText(text) => text.to_string(),
     }
 }

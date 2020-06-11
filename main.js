@@ -8,7 +8,10 @@ function loadPage(href, pageClass) {
         pages.set(href, {
             pageClass,
             promise: fetch(href, {
-                headers: { Accept: "application/json" },
+                headers: {
+                    Accept: "application/json",
+                    "Cache-Control": "no-cache",
+                },
             }).then(response => response.json()),
         });
     }
@@ -37,8 +40,9 @@ function navigateTo(href, pageClass) {
 
 menuLinks.forEach(a => {
     a.addEventListener("mouseenter", () => {
-        if (!a.classList.contains("active")) {
-            loadPage(a.getAttribute("href"), a.className);
+        const href = a.getAttribute("href");
+        if (href !== location.pathname) {
+            loadPage(href, a.className);
         }
     });
 });
@@ -52,8 +56,9 @@ document.body.addEventListener("click", event => {
 
             history.pushState(null, document.head.title, href);
             navigateTo(
-                a.getAttribute("href"),
-                a.className || document.body.className
+                href,
+                a.className.replace(/\s*active\s*/, "") ||
+                    document.body.className
             );
         }
     }

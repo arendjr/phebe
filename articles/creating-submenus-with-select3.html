@@ -1,0 +1,81 @@
+<p>
+    <b>Update:</b> This post mentioned the release of Select3 v1.0. The project
+    has since been renamed to Selectivity.js and all references in this post
+    have been updated.
+</p>
+<p>
+    <b>tl;dr:</b> Selectivity.js now supports
+    <a href="https://arendjr.github.io/selectivity/#select-a-city-by-timezone"
+        >submenus</a
+    >.
+</p>
+<p>
+    Do you know the feeling when you've built some awesome code that's
+    super-flexible and extensible and everything, opening endless possibilities
+    and unimaginable scenarios, only to realize in hindsight that all this
+    over-engineering was wasted effort and all this true potential of the code
+    never materialized because it simply wasn't what you actually <i>needed</i>?
+    It's a very common trap that I think pretty much every software engineer has
+    fallen into at least once in his career... Which is why it's fun to write
+    about when the opposite happens.
+</p>
+<p>
+    Recently I took it upon myself to create a new library called
+    <a href="https://arendjr.github.io/selectivity/">Selectivity</a>. It was
+    originally called Select3 because it's actually a reimplementation of the
+    popular <a href="https://select2.github.io/">Select2</a> library. The main
+    reason I decided to go my own way and make a from-scratch reimplementation
+    was because I needed more flexibility and had to facilitate some use cases
+    involving highly customized dropdowns that Select2 just wouldn't cooperate
+    on. So I made it flexible and modular and everything. Then I integrated it
+    into <a href="https://www.speakap.com/">our product</a> and implemented our
+    use cases and all seemed said and done.
+</p>
+<p>
+    Until last week some requirements fell upon my plate and
+    <a href="https://twitter.com/tomkleijn">my colleague</a> jokingly said,
+    "that's a nice job for your Selectivity". I scratched my beard a bit, gave
+    it a thought, then gave it a shot. As obvious as it is now, this was
+    actually a use-case I hadn't anticipated in advance. All that was needed was
+    the ability to open submenus from the main dropdown and the submenus should
+    contain a search input to be able to search among the results as shown in
+    <a href="https://arendjr.github.io/select3/#select-a-city-by-timezone"
+        >this example</a
+    >. And all that was needed to implement it was another Selectivity module
+    and some minor tweaks.
+</p>
+<p>
+    Now, for those using Selectivity.js, let me explain how you can create your
+    own select input with submenus. All the results from which the user can
+    select an item are specified as objects with id and text properties. These
+    are either set on the Selectivity instance using the items option (to set a
+    static array of result items) or through the query function (to fetch a
+    dynamic set of result items based on search terms). Now, if you want to
+    attach a submenu to a result item, all you need to do is set a submenu
+    property on the item. This submenu property should be another object and in
+    it you can again specifiy an items array or a query function like you did
+    for the main Selectivity instance. Optionally, you can also specify the
+    showSearchInput option (whether or not the submenu should contain its own
+    search input) and/or the positionDropdown function (to customize the
+    positioning of the submenu's dropdown; this method has the same signature as
+    the positionDropdown function you can specify for the Selectivity instance).
+</p>
+<p>Example code from the example linked above:</p>
+<pre>
+$('#example-4').selectivity({
+    allowClear: true,
+    items: [{
+        id: '+00:00',
+        text: 'Western European Time Zone',
+        submenu: {
+            items: [
+                { id: 4, text: 'Barcelona' }
+                /*, ...*/
+            ],
+            showSearchInput: true
+        }
+    } /*, ...*/],
+    placeholder: 'No city selected'
+});</pre
+>
+<p>That's all!</p>
