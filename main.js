@@ -36,18 +36,27 @@ function navigateTo(href, pageClass) {
 }
 
 menuLinks.forEach(a => {
-    a.addEventListener("click", event => {
-        event.preventDefault();
-
-        history.pushState(null, document.head.title, a.getAttribute("href"));
-        navigateTo(a.getAttribute("href"), a.className);
-    });
-
     a.addEventListener("mouseenter", () => {
         if (!a.classList.contains("active")) {
             loadPage(a.getAttribute("href"), a.className);
         }
     });
+});
+
+document.body.addEventListener("click", event => {
+    if (event.target.tagName === "A") {
+        const a = event.target;
+        const href = a.getAttribute("href");
+        if (href.startsWith("/")) {
+            event.preventDefault();
+
+            history.pushState(null, document.head.title, href);
+            navigateTo(
+                a.getAttribute("href"),
+                a.className || document.body.className
+            );
+        }
+    }
 });
 
 window.onpopstate = event => {

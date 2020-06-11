@@ -1,0 +1,60 @@
+<p>
+    Today I'm proud to announce the release of
+    <a href="https://arendjr.github.io/selectivity">Selectivity.js</a> v1.1.0.
+    Selectivity.js is a library for displaying rich select boxes. It is intended
+    to be lightweight and flexible and has a modular design, a build system for
+    creating custom builds and a proper test suite.
+</p>
+<p>The new version comes with a few notable changes:</p>
+<ul>
+    <li>
+        Shortly after version v1.0.0 was release the project has been officially
+        renamed from Select3 to Selectivity. If you are still using the project
+        under the Select3 name, this will be a breaking change as all symbols
+        have been renamed accordingly. Anyone who jumped in after the name
+        change should not have to deal with any API changes.
+    </li>
+    <li>
+        Keyboard support has been vastly improved. All Selectivity inputs can
+        now be navigated to using the Tab key. Submenus can now be navigated
+        with the keyboard, and submenus can be closed using Backspace. Backspace
+        can also be used to clear a selected input if the allowClear option is
+        enabled. And finally, some annoying page scrolling issues have been
+        fixed when using keyboard navigation to scroll through a longer list of
+        results.
+    </li>
+    <li>
+        Compatibility with web forms has been improved so values selected in a
+        Selectivity.js instance can be submitted back to a server using regular
+        HTML form submission.
+    </li>
+    <li>
+        A Ruby on Rails Gem has been created to facilitate users wanting to use
+        Selectivity.js in their Ruby application.
+    </li>
+    <li>Many bugs have been fixed.</li>
+</ul>
+<p>
+    Special thanks go to
+    <a href="http://konradjurkowski.pl/">Konrad Jurkowski</a> without whom this
+    release would've been significantly less impressive. Specifically, he's
+    developed the web forms compatibility and the Ruby on Rails gem for which
+    there is a separate project page:
+    <a href="https://github.com/msx2/selectivity-rails"
+        >https://github.com/msx2/selectivity-rails</a
+    >. As part of this work he has also set up our Sass support that we now use
+    to generate our stylesheets. And last but not least, he's contributed
+    several bugfixes as well.
+</p>
+<p>
+    Additional thanks go to everyone who has submitted Pull Requests or reported
+    issues on GitHub!
+</p>
+<p>
+    You can install the new version through Bower, Component, the new Ruby Gem
+    or just download the release right here:
+    <a href="https://github.com/arendjr/selectivity/archive/v1.1.0.tar.gz"
+        >https://github.com/arendjr/selectivity/archive/v1.1.0.tar.gz</a
+    >
+</p>
+<p>Cheers!</p>

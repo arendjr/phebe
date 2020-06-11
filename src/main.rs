@@ -25,6 +25,12 @@ struct JsonPage {
     content: String,
 }
 
+struct ArticleDef {
+    href: &'static str,
+    filename: &'static str,
+    title: &'static str,
+}
+
 struct PageDef {
     page: &'static str,
     href: &'static str,
@@ -45,8 +51,28 @@ lazy_static! {
         generate_static_pages(PreferredColorScheme::Unspecified);
 }
 
-fn get_page_defs() -> Vec<PageDef> {
+fn get_article_defs() -> Vec<ArticleDef> {
     vec![
+        ArticleDef {
+            href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
+            filename: "how-i-made-text-clipper-fastest-html",
+            title: "How I made text-clipper the fastest HTML clipping library",
+        },
+        ArticleDef {
+            href: "/2016/08/selectivity-v3-adds-react-support.html",
+            filename: "selectivity-v3-adds-react-support",
+            title: "Selectivity v3 adds React support",
+        },
+        ArticleDef {
+            href: "/2015/05/selectivityjs-v110-improves-keyboard.html",
+            filename: "selectivityjs-v110-improves-keyboard",
+            title: "Selectivity.js v1.1.0 improves keyboard support, adds Ruby Gem",
+        },
+    ]
+}
+
+fn get_page_defs() -> Vec<PageDef> {
+    let mut pages = vec![
         PageDef {
             page: "me",
             href: "/",
@@ -64,15 +90,20 @@ fn get_page_defs() -> Vec<PageDef> {
         },
         PageDef {
             page: "articles",
-            href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
-            content: generate_article_content("how-i-made-text-clipper-fastest-html"),
+            href: "/articles",
+            content: generate_articles_content(),
         },
-        PageDef {
-            page: "articles",
-            href: "/2016/08/selectivity-v3-adds-react-support.html",
-            content: generate_article_content("selectivity-v3-adds-react-support"),
-        },
-    ]
+    ];
+
+    for article_def in get_article_defs() {
+        pages.push(PageDef {
+            page: "article",
+            href: article_def.href,
+            content: generate_article_content(&article_def),
+        });
+    }
+
+    pages
 }
 
 fn generate_json_pages() -> HashMap<&'static str, Bytes> {
@@ -150,14 +181,6 @@ fn generate_theme_selector() -> Box<dyn FlowContent<String>> {
     </div>)
 }
 
-fn generate_article_content(filename: &'static str) -> Box<dyn FlowContent<String>> {
-    let content =
-        fs::read_to_string(format!("articles/{}.html", filename)).expect("Could not read article");
-    html!(<div class="content">
-        {unsafe_text!(content)}
-    </div>)
-}
-
 fn generate_index_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
         <h1>"Arend van Beelen jr."</h1>
@@ -169,8 +192,19 @@ fn generate_index_content() -> Box<dyn FlowContent<String>> {
 fn generate_people_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
         <h1>"People"</h1>
-        <p><a href="https://www.ciyuxu.nl">"Ciyu Xu"</a></p>
-        <p><a href="https://www.aronsilver.com">"Aron Silver"</a></p>
+        <p>"My two passions are technology and writing, but neither would exist without the people that create them. A good story without a convincing protagonist inevitably falls flat. And good technology that doesn't cater to the people will never be more than a curio. These are some of the people that inspire my life..."</p>
+        <p class="alternate-a">
+            <a href="https://www.ciyuxu.nl"><b>"Ciyu Xu"</b></a><br />
+            "My loving wife with whom I live in Haarlem. She's a designer and frontend developer."
+        </p>
+        <p class="alternate-b">
+            <b>"Boris van Beelen"</b><br />
+            "Our beautiful son. He's a little too young to have his own online presence yet :)"
+        </p>
+        <p class="alternate-a">
+            <a href="https://www.aronsilver.com"><b>"Aron Silver"</b></a><br />
+            "A Dutch author of little renown, so far. I'm quite into his works..."
+        </p>
     </div>)
 }
 
@@ -179,6 +213,27 @@ fn generate_projects_content() -> Box<dyn FlowContent<String>> {
         <h1>"Projects"</h1>
         <p><a href="https://github.com/arendjr/text-clipper">"text-clipper"</a>" - A JavaScript text truncation library."</p>
         <p><a href="https://github.com/arendjr/PlainText">"PlainText"</a>" - A MUD engine written in C++ and JavaScript."</p>
+    </div>)
+}
+
+fn generate_articles_content() -> Box<dyn FlowContent<String>> {
+    let articles = get_article_defs();
+
+    html!(<div class="content">
+        <h1>"Articles"</h1>
+        <p>"Not a great blogger myself, I do write the occassional post. I've listed them here for your enjoyment:"</p>
+        <ul>
+            {articles.iter().map(|article| html!(<li><a href={article.href}>{text!(article.title)}</a></li>))}
+        </ul>
+    </div>)
+}
+
+fn generate_article_content(article: &ArticleDef) -> Box<dyn FlowContent<String>> {
+    let content = fs::read_to_string(format!("articles/{}.html", article.filename))
+        .expect("Could not read article");
+    html!(<div class="content">
+        <h1>{text!(article.title)}</h1>
+        {unsafe_text!(content)}
     </div>)
 }
 
