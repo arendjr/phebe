@@ -1,4 +1,4 @@
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 use bytes::Bytes;
 use hyper::header::{HeaderMap, HeaderValue};
@@ -221,7 +221,7 @@ fn generate_people_content() -> Box<dyn FlowContent<String>> {
 fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
         <h1>"Portfolio"</h1>
-        <p>"Ever since my dad taught me my first few lines of BASIC, programming has been in my passion. I'll present the highlights from recent to old, to spare you the history if you're not interested:"</p>
+        <p>"Ever since my dad taught me my first few lines of BASIC, programming has been my passion. I'll present the highlights from recent to old, to spare you the history if you're not interested:"</p>
         <p class="alternate-a">
             <b>"This website"</b><br />
             "This website was custom-built in Rust as an experience to get familiar with the language. Feel free to look at "
@@ -229,7 +229,7 @@ fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
         </p>
         <p class="alternate-b">
             <a href="https://www.speakap.com/"><b>"Speakap"</b></a><br />
-            "I am employed by Speakap by over 8 years now, where I work as a Principal Software Engineer. Some of the public projects that I created for them are "
+            "I am employed by Speakap by over 8 years now, where I work as a Principal Software Engineer. Some open-source projects that I created for them are "
             <a href="https://github.com/arendjr/text-clipper">"text-clipper"</a>" and "
             <a href="http://arendjr.github.io/selectivity/">"Selectivity.js"</a>"."
         </p>
@@ -239,11 +239,29 @@ fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
         </p>
         <p class="alternate-b">
             <b>"Hyves"</b><br />
-            "Hyves was the largest social network of the Netherlands. I worked there for five-and-a-half years, leading the team that created the Hyves Desktop suite using C++/Qt and web technologies. I also developed several server-side features in PHP and worked on their chat server created using Stackless Python. Finally, I also worked on their mobile stack creating hybrid PhoneGap applications for Symbian, Android, iOS and BlackBerry. Symbian in particular was a fun one, as I had to built the PhoneGap container itself first in C++ :)"
+            "Hyves was the largest social network of the Netherlands. I worked there for five-and-a-half years, leading the team that created the Hyves Desktop suite using C++/Qt and web technologies. I also developed several server-side features in PHP and worked on their chat server created using Stackless Python. Finally, I also worked on their mobile stack creating hybrid PhoneGap applications for Symbian, Android, iOS and BlackBerry. Symbian in particular was a fun one, as I first had to built the PhoneGap container itself in C++ :)"<br />
+            "An open-source project (now hopelessly outdated) I developed as part of my employment there was "
+            <a href="https://github.com/arendjr/woodpecker">"Woodpecker"</a>", an SCSS compiler written in Python."
         </p>
         <p class="alternate-a">
+            <b>"Distributed friend graph database"</b><br />
+            "For my university's master's project, which I did at Hyves, I created a PoC for a distributed friend graph database in C++. It was able to efficiently retrieve things like friend recommendations as well as determine whether any two people shared a connection in the third degree."
+        </p>
+        <p class="alternate-b">
             <a href="https://kde.org/"><b>"KDE project"</b></a><br />
             "During my time at university I made several contributions to the KDE project on the side. From the search bar for the Konqueror web browser and the type-ahead-find feature in its KHTML rendering engine to support for the Windows RDP protcol in the KDE Remote Desktop Client application. For the latter, rather than reimplementing the RDP protocol, I created a patch for the "<a href="https://www.rdesktop.org/">"rdesktop application"</a>" so that its X11 window could be embedded into other windows, which was then used by KRDC."
+        </p>
+        <p class="alternate-a">
+            <b>"Real-time raytracing engine"</b><br />
+            "For my university's bachelor's project me and three fellow students developed a PoC real-time raytracing engine in C++ with CUDA support. Of course, given the hardware at the time, this was only feasible on low resolutions using various shortcuts, but it was an interesting project nonetheless."
+        </p>
+        <p class="alternate-b">
+            <a href="https://github.com/arendjr/Qivrit"><b>"Qivrit"</b></a><br />
+            "In order to help myself and fellow classmates in high-school improve our natural language skills, I developed a little Windows application using Borland C++Builder. The concept was simple: You enter the lists of all the words with their translations, and the program will question you on your knowledge of them afterwards. I don't think I have the source to this application anymore, but years later, as I made an attempt to learn Hebrew, I wrote a similar program called Qivrit. This one was also written in C++ using Qt and tests both knowledge of the Hebrew alphabet as well as basic vocabulary."
+        </p>
+        <p class="alternate-a">
+            <b>"Adventure"</b><br />
+            "One of my oldest applications hobby projects is a game: Adventure. If my memory serves me right, the first version was created in QBASIC. When I started using KDE, I made a port called "<a href="https://store.kde.org/p/1109408/">"KAdventure"</a>"."
         </p>
     </div>)
 }
@@ -253,7 +271,7 @@ fn generate_articles_content() -> Box<dyn FlowContent<String>> {
 
     html!(<div class="content">
         <h1>"Articles"</h1>
-        <p>"Not a great blogger myself, I do write the occassional post. I've listed them here for your enjoyment:"</p>
+        <p>"Not an avid blogger myself, I do write the occassional post. I've listed them here for your enjoyment:"</p>
         <ul>
             {articles.iter().map(|article| html!(<li><a href={article.href}>{text!(article.title)}</a></li>))}
         </ul>
@@ -341,9 +359,9 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
                     "Set-Cookie",
                     HeaderValue::from_static(
                         if color_scheme_override == PreferredColorScheme::Dark {
-                            "color_scheme=dark"
+                            "color_scheme=dark; Path=/"
                         } else {
-                            "color_scheme=light"
+                            "color_scheme=light; Path=/"
                         },
                     ),
                 );
