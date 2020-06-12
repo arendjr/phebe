@@ -94,9 +94,9 @@ fn get_page_defs() -> Vec<PageDef> {
             content: generate_people_content(),
         },
         PageDef {
-            page: "projects",
-            href: "/projects",
-            content: generate_projects_content(),
+            page: "portfolio",
+            href: "/portfolio",
+            content: generate_portfolio_content(),
         },
         PageDef {
             page: "articles",
@@ -164,7 +164,7 @@ fn generate_menu(active_page: &str) -> Box<dyn FlowContent<String>> {
     html!(<ul class="menu">
         <li>{generate_menu_item("me", "/", "Me", active_page)}</li>
         <li>{generate_menu_item("people", "/people", "People", active_page)}</li>
-        <li>{generate_menu_item("projects", "/projects", "Projects", active_page)}</li>
+        <li>{generate_menu_item("portfolio", "/portfolio", "Portfolio", active_page)}</li>
         <li>{generate_menu_item("articles", "/articles", "Articles", active_page)}</li>
         <li>{generate_menu_item("contact", "/contact", "Contact", active_page)}</li>
     </ul>)
@@ -218,11 +218,33 @@ fn generate_people_content() -> Box<dyn FlowContent<String>> {
     </div>)
 }
 
-fn generate_projects_content() -> Box<dyn FlowContent<String>> {
+fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
-        <h1>"Projects"</h1>
-        <p><a href="https://github.com/arendjr/text-clipper">"text-clipper"</a>" - A JavaScript text truncation library."</p>
-        <p><a href="https://github.com/arendjr/PlainText">"PlainText"</a>" - A MUD engine written in C++ and JavaScript."</p>
+        <h1>"Portfolio"</h1>
+        <p>"Ever since my dad taught me my first few lines of BASIC, programming has been in my passion. I'll present the highlights from recent to old, to spare you the history if you're not interested:"</p>
+        <p class="alternate-a">
+            <b>"This website"</b><br />
+            "This website was custom-built in Rust as an experience to get familiar with the language. Feel free to look at "
+            <a href="https://github.com/arendjr/phebe">"the source"</a>"."
+        </p>
+        <p class="alternate-b">
+            <a href="https://www.speakap.com/"><b>"Speakap"</b></a><br />
+            "I am employed by Speakap by over 8 years now, where I work as a Principal Software Engineer. Some of the public projects that I created for them are "
+            <a href="https://github.com/arendjr/text-clipper">"text-clipper"</a>" and "
+            <a href="http://arendjr.github.io/selectivity/">"Selectivity.js"</a>"."
+        </p>
+        <p class="alternate-a">
+            <a href="https://github.com/arendjr/PlainText"><b>"PlainText"</b></a><br />
+            "PlainText is a MUD engine I built in C++ and JavaScript as a hobby."
+        </p>
+        <p class="alternate-b">
+            <b>"Hyves"</b><br />
+            "Hyves was the largest social network of the Netherlands. I worked there for five-and-a-half years, leading the team that created the Hyves Desktop suite using C++/Qt and web technologies. I also developed several server-side features in PHP and worked on their chat server created using Stackless Python. Finally, I also worked on their mobile stack creating hybrid PhoneGap applications for Symbian, Android, iOS and BlackBerry. Symbian in particular was a fun one, as I had to built the PhoneGap container itself first in C++ :)"
+        </p>
+        <p class="alternate-a">
+            <a href="https://kde.org/"><b>"KDE project"</b></a><br />
+            "During my time at university I made several contributions to the KDE project on the side. From the search bar for the Konqueror web browser and the type-ahead-find feature in its KHTML rendering engine to support for the Windows RDP protcol in the KDE Remote Desktop Client application. For the latter, rather than reimplementing the RDP protocol, I created a patch for the "<a href="https://www.rdesktop.org/">"rdesktop application"</a>" so that its X11 window could be embedded into other windows, which was then used by KRDC."
+        </p>
     </div>)
 }
 

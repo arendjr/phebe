@@ -11,7 +11,7 @@ lazy_static! {
         pages: hashmap! {
             "me" => "#daabbc",
             "people" => "#969f5a",
-            "projects" => "#768036",
+            "portfolio" => "#768036",
             "articles" => "#3f2310",
             "contact" => "#1c2723",
         },
@@ -22,7 +22,7 @@ lazy_static! {
         pages: hashmap! {
             "me" => "#daabbc",
             "people" => "#969f5a",
-            "projects" => "#768036",
+            "portfolio" => "#768036",
             "articles" => "#eebf58",
             "contact" => "#c1c4c3",
         },
