@@ -20,6 +20,8 @@ use typed_html::{html, text, unsafe_text};
 mod components;
 use components::{Document, PreferredColorScheme};
 
+const PORT: u16 = 3000;
+
 #[derive(Serialize, Debug)]
 struct JsonPage {
     content: String,
@@ -378,13 +380,14 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
 
 #[tokio::main]
 async fn main() {
-    let address = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let address = SocketAddr::from(([127, 0, 0, 1], PORT));
 
     let make_service = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(|req: Request<Body>| async { serve(req) }))
     });
 
     let server = Server::bind(&address).serve(make_service);
+    println!("Listening on port {}", PORT);
 
     if let Err(error) = server.await {
         eprintln!("server error: {}", error);
