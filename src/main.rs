@@ -168,7 +168,7 @@ fn generate_menu(active_page: &str) -> Box<dyn FlowContent<String>> {
         <li>{generate_menu_item("people", "/people", "People", active_page)}</li>
         <li>{generate_menu_item("portfolio", "/portfolio", "Portfolio", active_page)}</li>
         <li>{generate_menu_item("articles", "/articles", "Articles", active_page)}</li>
-        <li>{generate_menu_item("contact", "/contact", "Contact", active_page)}</li>
+        //<li>{generate_menu_item("contact", "/contact", "Contact", active_page)}</li>
     </ul>)
 }
 
@@ -380,14 +380,14 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
 
 #[tokio::main]
 async fn main() {
-    let address = SocketAddr::from(([127, 0, 0, 1], PORT));
+    let address = SocketAddr::from(([0, 0, 0, 0], PORT));
 
     let make_service = make_service_fn(|_conn| async {
         Ok::<_, Infallible>(service_fn(|req: Request<Body>| async { serve(req) }))
     });
 
     let server = Server::bind(&address).serve(make_service);
-    println!("Listening on port {}", PORT);
+    println!("Listening on port {}...", PORT);
 
     if let Err(error) = server.await {
         eprintln!("server error: {}", error);
