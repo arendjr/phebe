@@ -27,7 +27,7 @@ impl Document {
 impl<'a> fmt::Display for Document {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let head = format!(
-            "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><style>{} {} {}</style><script defer src=\"/main.js\" type=\"module\"></script></head>",
+            "<head><title>Arend van Beelen jr.</title><meta name=\"author\" content=\"Arend van Beelen jr.\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>{} {} {}</style><script defer src=\"/main.js\" type=\"module\"></script></head>",
             *FONT_CSS,
             *MAIN_CSS,
             generate_css(self.color_scheme)

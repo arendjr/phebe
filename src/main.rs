@@ -96,9 +96,9 @@ fn get_page_defs() -> Vec<PageDef> {
             content: generate_people_content(),
         },
         PageDef {
-            page: "portfolio",
-            href: "/portfolio",
-            content: generate_portfolio_content(),
+            page: "projects",
+            href: "/projects",
+            content: generate_projects_content(),
         },
         PageDef {
             page: "articles",
@@ -166,7 +166,7 @@ fn generate_menu(active_page: &str) -> Box<dyn FlowContent<String>> {
     html!(<ul class="menu">
         <li>{generate_menu_item("me", "/", "Me", active_page)}</li>
         <li>{generate_menu_item("people", "/people", "People", active_page)}</li>
-        <li>{generate_menu_item("portfolio", "/portfolio", "Portfolio", active_page)}</li>
+        <li>{generate_menu_item("projects", "/projects", "Projects", active_page)}</li>
         <li>{generate_menu_item("articles", "/articles", "Articles", active_page)}</li>
         //<li>{generate_menu_item("contact", "/contact", "Contact", active_page)}</li>
     </ul>)
@@ -196,8 +196,10 @@ fn generate_theme_selector() -> Box<dyn FlowContent<String>> {
 fn generate_index_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
         <h1>"Arend van Beelen jr."</h1>
+        <p>"Welcome,"</p>
         <p>"I am a software engineer by trade and an author for leasure."</p>
         <p>"Have a look around and may we get acquinted."</p>
+        <p>"Yours,"<br />"Arend jr."</p>
     </div>)
 }
 
@@ -220,9 +222,9 @@ fn generate_people_content() -> Box<dyn FlowContent<String>> {
     </div>)
 }
 
-fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
+fn generate_projects_content() -> Box<dyn FlowContent<String>> {
     html!(<div class="content">
-        <h1>"Portfolio"</h1>
+        <h1>"Projects"</h1>
         <p>"Ever since my dad taught me my first few lines of BASIC, programming has been my passion. I'll present the highlights from recent to old, to spare you the history if you're not interested:"</p>
         <p class="alternate-a">
             <b>"This website"</b><br />
@@ -258,12 +260,16 @@ fn generate_portfolio_content() -> Box<dyn FlowContent<String>> {
             "For my university's bachelor's project me and three fellow students developed a PoC real-time raytracing engine in C++ with CUDA support. Of course, given the hardware at the time, this was only feasible on low resolutions using various shortcuts, but it was an interesting project nonetheless."
         </p>
         <p class="alternate-b">
-            <a href="https://github.com/arendjr/Qivrit"><b>"Qivrit"</b></a><br />
-            "In order to help myself and fellow classmates in high-school improve our natural language skills, I developed a little Windows application using Borland C++Builder. The concept was simple: You enter the lists of all the words with their translations, and the program will question you on your knowledge of them afterwards. I don't think I have the source to this application anymore, but years later, as I made an attempt to learn Hebrew, I wrote a similar program called Qivrit. This one was also written in C++ using Qt and tests both knowledge of the Hebrew alphabet as well as basic vocabulary."
+            <b>"Aukyla"</b><br />
+            "During my first part-time job, I worked as a solo developer in a "<a href="https://www.auton.nl/">"small automation firm"</a>" that lead to the formation of Aukyla Software, where I did what every programmer did at the time: Create their own PHP CMS. I created the "<a href="https://sourceforge.net/projects/aukyla/">"Aukyla PHP Framework"</a>", upon which I built "<a href="https://sourceforge.net/projects/adms/">"ADMS"</a>", an intranet-focused Document Management System, and Aukyla Site Manager, which powered several public websites at the time."
         </p>
         <p class="alternate-a">
+            <a href="https://github.com/arendjr/Qivrit"><b>"Qivrit"</b></a><br />
+            "In order to help myself and fellow classmates in high-school improve our natural language skills, I developed a little Windows application using Borland C++Builder. The concept was simple: You enter the lists of all the words with their translations, and the program will question you on your knowledge of them afterwards. I don't think I have the source to this application anymore, but years later, as I made an attempt to learn Hebrew, I wrote a similar program called Qivrit. This one was also written in C++, but using Qt and tests both knowledge of the Hebrew alphabet as well as basic vocabulary."
+        </p>
+        <p class="alternate-b">
             <b>"Adventure"</b><br />
-            "One of my oldest applications hobby projects is a game: Adventure. If my memory serves me right, the first version was created in QBASIC. When I started using KDE, I made a port called "<a href="https://store.kde.org/p/1109408/">"KAdventure"</a>"."
+            "One of my oldest hobby projects is a game: Adventure. If my memory serves me right, the first version was created in QBASIC. When I started using KDE, I made a port called "<a href="https://store.kde.org/p/1109408/">"KAdventure"</a>"."
         </p>
     </div>)
 }
