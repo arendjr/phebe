@@ -198,7 +198,7 @@ fn generate_index_content() -> Box<dyn FlowContent<String>> {
         <h1>"Arend van Beelen jr."</h1>
         <p>"Welcome,"</p>
         <p>"I am a software engineer by trade and an author for leasure."</p>
-        <p>"Have a look around and may we get acquinted."</p>
+        <p>"Have a look around and may we get acquainted."</p>
         <p>"Yours,"<br />"Arend jr."</p>
     </div>)
 }
