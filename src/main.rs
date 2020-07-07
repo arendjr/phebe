@@ -233,7 +233,7 @@ fn generate_projects_content() -> Box<dyn FlowContent<String>> {
         </p>
         <p class="alternate-b">
             <a href="https://www.speakap.com/"><b>"Speakap"</b></a><br />
-            "I am employed by Speakap by over 8 years now, where I work as a Principal Software Engineer. Some open-source projects that I created for them are "
+            "I am employed by Speakap for over 7 years now, where I work as a Principal Software Engineer. Some open-source projects that I created for them are "
             <a href="https://github.com/arendjr/text-clipper">"text-clipper"</a>" and "
             <a href="http://arendjr.github.io/selectivity/">"Selectivity.js"</a>"."
         </p>
