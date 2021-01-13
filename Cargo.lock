@@ -1308,7 +1308,7 @@ checksum = "e604eb7b43c06650e854be16a2a03155743d3752dd1c943f6829e26b7a36e382"
 [[package]]
 name = "typed-html"
 version = "0.2.2"
-source = "git+https://github.com/bodil/typed-html#4c13ecca506887d07638cdf12d6ea6d51cd3b29a"
+source = "git+https://github.com/bodil/typed-html?rev=4c13ecca506887d07638cdf12d6ea6d51cd3b29a#4c13ecca506887d07638cdf12d6ea6d51cd3b29a"
 dependencies = [
  "htmlescape",
  "language-tags",

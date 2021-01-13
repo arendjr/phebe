@@ -72,11 +72,11 @@ p {
     font-size: 1rem;
     margin: 1rem 0;
 }
-.alternate-a {
+.alternate:nth-child(odd) {
     padding-left: 1rem;
     padding-right: 3rem;
 }
-.alternate-b {
+.alternate:nth-child(even) {
     padding-left: 4rem;
 }
 
