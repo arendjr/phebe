@@ -1,4 +1,4 @@
-FROM rust:1.44 as builder
+FROM rust:1.48 as builder
 WORKDIR /usr/src/phebe
 COPY . .
 RUN cargo install --locked --path .
