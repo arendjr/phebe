@@ -44,6 +44,12 @@ lazy_static! {
     static ref MAIN_JS: Bytes = fs::read_to_string("main.js")
         .expect("Could not read main JS")
         .into();
+    static ref PRISM_JS: Bytes = fs::read_to_string("prism.js")
+        .expect("Could not read prism JS")
+        .into();
+    static ref PRISM_CSS: Bytes = fs::read_to_string("prism.css")
+        .expect("Could not read prism CSS")
+        .into();
     static ref DARK_PAGES: HashMap<&'static str, Bytes> =
         generate_static_pages(PreferredColorScheme::Dark);
     static ref JSON_PAGES: HashMap<&'static str, Bytes> = generate_json_pages();
@@ -55,6 +61,11 @@ lazy_static! {
 
 fn get_article_defs() -> Vec<ArticleDef> {
     vec![
+        ArticleDef {
+            href: "/2021/01/how-to-multiple-redux-slice-instances.html",
+            filename: "how-to-multiple-redux-slice-instances",
+            title: "How to create multiple instances of a state slice in Redux",
+        },
         ArticleDef {
             href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
             filename: "how-i-made-text-clipper-fastest-html",
@@ -330,12 +341,23 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
         return Ok(response);
     }
 
-    if req.uri().path() == "/main.js" {
-        let mut response = Response::new(Body::from(MAIN_JS.clone()));
+    let path = req.uri().path();
+    if path == "/main.js" || path == "/prism.js" {
+        let mut response = Response::new(Body::from(if path == "/prism.js" {
+            PRISM_JS.clone()
+        } else {
+            MAIN_JS.clone()
+        }));
         response.headers_mut().insert(
             "Content-Type",
             HeaderValue::from_static("application/javascript"),
         );
+        return Ok(response);
+    } else if path == "/prism.css" {
+        let mut response = Response::new(Body::from(PRISM_CSS.clone()));
+        response
+            .headers_mut()
+            .insert("Content-Type", HeaderValue::from_static("text/css"));
         return Ok(response);
     }
 

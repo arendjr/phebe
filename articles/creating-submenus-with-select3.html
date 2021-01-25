@@ -5,9 +5,7 @@
 </p>
 <p>
     <b>tl;dr:</b> Selectivity.js now supports
-    <a href="https://arendjr.github.io/selectivity/#select-a-city-by-timezone"
-        >submenus</a
-    >.
+    <a href="https://arendjr.github.io/selectivity/#select-a-city-by-timezone">submenus</a>.
 </p>
 <p>
     Do you know the feeling when you've built some awesome code that's
@@ -39,9 +37,8 @@
     actually a use-case I hadn't anticipated in advance. All that was needed was
     the ability to open submenus from the main dropdown and the submenus should
     contain a search input to be able to search among the results as shown in
-    <a href="https://arendjr.github.io/select3/#select-a-city-by-timezone"
-        >this example</a
-    >. And all that was needed to implement it was another Selectivity module
+    <a href="https://arendjr.github.io/select3/#select-a-city-by-timezone">this example</a>. And all that was needed to
+    implement it was another Selectivity module
     and some minor tweaks.
 </p>
 <p>
@@ -61,8 +58,7 @@
     the positionDropdown function you can specify for the Selectivity instance).
 </p>
 <p>Example code from the example linked above:</p>
-<pre>
-$('#example-4').selectivity({
+<pre><code class="language-js">$('#example-4').selectivity({
     allowClear: true,
     items: [{
         id: '+00:00',
@@ -76,6 +72,5 @@ $('#example-4').selectivity({
         }
     } /*, ...*/],
     placeholder: 'No city selected'
-});</pre
->
+});</code></pre>
 <p>That's all!</p>

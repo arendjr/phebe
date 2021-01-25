@@ -1,7 +1,25 @@
 const menuLinks = document.querySelectorAll(".menu a");
 
+const CODE_MARKER = '<code class="language-';
+
 const pages = new Map();
 pages.set(location.pathname, { pageClass: document.body.className });
+
+function highlightCode() {
+    if (window.Prism) {
+        Prism.highlightAllUnder(document.querySelector(".content"));
+    } else {
+        const link = document.createElement("link");
+        link.setAttribute("href", "/prism.css");
+        link.setAttribute("rel", "stylesheet");
+        link.setAttribute("type", "text/css");
+        document.head.appendChild(link);
+
+        const script = document.createElement("script");
+        script.setAttribute("src", "/prism.js");
+        document.head.appendChild(script);
+    }
+}
 
 function loadPage(href, pageClass) {
     if (!pages.has(href) || !pages.get(href).promise) {
@@ -28,6 +46,10 @@ function navigateTo(href, pageClass) {
                 .querySelector(".menu a." + pageClass)
                 .classList.add("active");
             document.querySelector(".content").outerHTML = content;
+
+            if (content.includes(CODE_MARKER)) {
+                highlightCode();
+            }
         })
         .catch(error => {
             console.error(

@@ -1,7 +1,5 @@
 * {
     box-sizing: border-box;
-    font-family: "Noto Sans JP", sans-serif;
-    font-weight: 300;
 }
 body {
     align-content: flex-start;
@@ -11,14 +9,25 @@ body {
     margin: 0;
     padding: 0;
 }
+body, p, h1, h2, h3 {
+    font-family: "Noto Sans JP", sans-serif;
+    font-weight: 300;
+}
 a {
     transition: color 2s ease-in-out, opacity 0.4s ease-in;
 }
 b {
     font-weight: 600;
 }
-pre {
+
+code, pre {
+    border-radius: 5px;
     font-family: "Source Code Pro", monospace;
+}
+pre {
+    margin: -10px;
+    overflow: auto;
+    padding: 10px;
 }
 
 .theme-selector {

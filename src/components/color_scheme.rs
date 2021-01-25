@@ -8,6 +8,8 @@ lazy_static! {
     static ref LIGHT_COLOR_SCHEME: ColorScheme = ColorScheme {
         foreground: "#111",
         background: "#fff",
+        code_foreground: "#2e2e2e",
+        code_background: "#f2f2f2",
         pages: hashmap! {
             "me" => "#daabbc",
             "people" => "#969f5a",
@@ -19,6 +21,8 @@ lazy_static! {
     static ref DARK_COLOR_SCHEME: ColorScheme = ColorScheme {
         foreground: "#fff",
         background: "#191919",
+        code_foreground: "#d6d6d6",
+        code_background: "#2e2e2e",
         pages: hashmap! {
             "me" => "#daabbc",
             "people" => "#969f5a",
@@ -57,6 +61,8 @@ impl From<&'static str> for FromHexError {
 struct ColorScheme {
     foreground: &'static str,
     background: &'static str,
+    code_foreground: &'static str,
+    code_background: &'static str,
     pages: HashMap<&'static str, &'static str>,
 }
 
@@ -86,9 +92,19 @@ fn generate_color_scheme_css(scheme: &ColorScheme) -> String {
     let background: Srgb<u8> = parse_hex_str(scheme.background).unwrap();
 
     format!(
-        "body {{ background-color: #{:x}; color: #{:x}; }} {}",
+        "body {{\
+            background-color: #{:x};\
+            color: #{:x};\
+        }}\
+        code, pre {{\
+            background-color: {};\
+            color: {};\
+        }}\
+        {}",
         background,
         foreground,
+        scheme.code_background,
+        scheme.code_foreground,
         scheme
             .pages
             .iter()
