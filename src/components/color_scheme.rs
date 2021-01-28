@@ -96,7 +96,7 @@ fn generate_color_scheme_css(scheme: &ColorScheme) -> String {
             background-color: #{:x};\
             color: #{:x};\
         }}\
-        code, pre {{\
+        code:not([class*=\"language-\"]) {{\
             background-color: {};\
             color: {};\
         }}\

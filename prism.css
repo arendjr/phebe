@@ -8,11 +8,6 @@ https://prismjs.com/download.html#themes=prism-okaidia&languages=clike+javascrip
 
 code[class*="language-"],
 pre[class*="language-"] {
-	color: #f8f8f2;
-	background: none;
-	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
-	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-	font-size: 1em;
 	text-align: left;
 	white-space: pre;
 	word-spacing: normal;
@@ -28,20 +23,6 @@ pre[class*="language-"] {
 	-moz-hyphens: none;
 	-ms-hyphens: none;
 	hyphens: none;
-}
-
-/* Code blocks */
-
-:not(pre) > code[class*="language-"],
-pre[class*="language-"] {
-	background: #272822;
-}
-
-/* Inline code */
-:not(pre) > code[class*="language-"] {
-	padding: .1em;
-	border-radius: .3em;
-	white-space: normal;
 }
 
 .token.comment,
