@@ -64,7 +64,7 @@ fn get_article_defs() -> Vec<ArticleDef> {
         ArticleDef {
             href: "/2021/01/how-to-multiple-redux-slice-instances.html",
             filename: "how-to-multiple-redux-slice-instances",
-            title: "How to create multiple instances of a state slice in Redux",
+            title: "Advanced Redux: How to create multiple instances of a state slice",
         },
         ArticleDef {
             href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
