@@ -238,12 +238,15 @@ fn generate_projects_content() -> Box<dyn FlowContent<String>> {
         <h1>"Projects"</h1>
         <p>"Ever since my dad taught me my first few lines of BASIC, programming has been my passion. I'll present the highlights from recent to old, to spare you the history if you're not interested:"</p>
         <p class="alternate">
-            <b>"Undisclosed startup"</b><br />
-            "I am currently working at an undisclosed startup, building some exciting developer tooling."
+        <a href="https://fiberplane.dev/"><b>"Fiberplane"</b></a><br />
+            "I am currently working at Fiberplane, where we are building exciting DevOps tooling. "
+            "One of the open-source projects I'm now contributing to is "
+            <a href="https://github.com/arendjr/ts-rs">"ts-rs"</a>
+            ", for generating TypeScript types from Rust definitions."
         </p>
         <p class="alternate">
             <b>"This website"</b><br />
-            "This website was custom-built in Rust as an experience to get familiar with the language. Feel free to look at "
+            "This website was custom-built in Rust as an exercise to get familiar with the language. Feel free to look at "
             <a href="https://github.com/arendjr/phebe">"the source"</a>"."
         </p>
         <p class="alternate">
@@ -260,7 +263,8 @@ fn generate_projects_content() -> Box<dyn FlowContent<String>> {
         </p>
         <p class="alternate">
             <a href="https://github.com/arendjr/PlainText"><b>"PlainText"</b></a><br />
-            "PlainText is a MUD engine I built in C++ and JavaScript as a hobby."
+            "PlainText is a MUD engine I originally built in C++ and JavaScript as a hobby. "
+            "A port to Rust (again as an exercise to gain experience) is WIP."
         </p>
         <p class="alternate">
             <b>"Hyves"</b><br />
