@@ -1,37 +1,35 @@
 use core::num::ParseIntError;
-use lazy_static::lazy_static;
 use maplit::hashmap;
+use once_cell::sync::Lazy;
 use palette::{Blend, LinSrgb, LinSrgba, Srgb};
 use std::collections::HashMap;
 
-lazy_static! {
-    static ref LIGHT_COLOR_SCHEME: ColorScheme = ColorScheme {
-        foreground: "#111",
-        background: "#fff",
-        code_foreground: "#2e2e2e",
-        code_background: "#f2f2f2",
-        pages: hashmap! {
-            "me" => "#daabbc",
-            "people" => "#969f5a",
-            "projects" => "#768036",
-            "articles" => "#3f2310",
-            "contact" => "#1c2723",
-        },
-    };
-    static ref DARK_COLOR_SCHEME: ColorScheme = ColorScheme {
-        foreground: "#fff",
-        background: "#191919",
-        code_foreground: "#d6d6d6",
-        code_background: "#2e2e2e",
-        pages: hashmap! {
-            "me" => "#daabbc",
-            "people" => "#969f5a",
-            "projects" => "#768036",
-            "articles" => "#eebf58",
-            "contact" => "#c1c4c3",
-        },
-    };
-}
+static LIGHT_COLOR_SCHEME: Lazy<ColorScheme> = Lazy::new(|| ColorScheme {
+    foreground: "#111",
+    background: "#fff",
+    code_foreground: "#2e2e2e",
+    code_background: "#f2f2f2",
+    pages: hashmap! {
+        "me" => "#daabbc",
+        "people" => "#969f5a",
+        "projects" => "#768036",
+        "articles" => "#3f2310",
+        "contact" => "#1c2723",
+    },
+});
+static DARK_COLOR_SCHEME: Lazy<ColorScheme> = Lazy::new(|| ColorScheme {
+    foreground: "#fff",
+    background: "#191919",
+    code_foreground: "#d6d6d6",
+    code_background: "#2e2e2e",
+    pages: hashmap! {
+        "me" => "#daabbc",
+        "people" => "#969f5a",
+        "projects" => "#768036",
+        "articles" => "#eebf58",
+        "contact" => "#c1c4c3",
+    },
+});
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum PreferredColorScheme {
@@ -67,7 +65,11 @@ struct ColorScheme {
 }
 
 fn parse_hex_str(hex: &str) -> Result<Srgb<u8>, FromHexError> {
-    let hex_code = if hex.starts_with('#') { &hex[1..] } else { hex };
+    let hex_code = if let Some(stripped) = hex.strip_prefix('#') {
+        stripped
+    } else {
+        hex
+    };
     match hex_code.len() {
         3 => {
             let red = u8::from_str_radix(&hex_code[..1], 16)?;

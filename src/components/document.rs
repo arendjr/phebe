@@ -1,26 +1,25 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use std::fmt;
 use std::fs;
-use typed_html::dom::DOMTree;
 
 use super::color_scheme::{generate_css, PreferredColorScheme};
 
 const CODE_MARKER: &str = "<code class=\"language-";
 
-lazy_static! {
-    static ref MAIN_CSS: String = fs::read_to_string("main.css").expect("Could not read main CSS");
-    static ref FONT_CSS: String = fs::read_to_string("fonts.css").expect("Could not read font CSS");
-    static ref PRISM_CSS: String =
-        fs::read_to_string("prism.css").expect("Could not read prism CSS");
-}
+static MAIN_CSS: Lazy<String> =
+    Lazy::new(|| fs::read_to_string("main.css").expect("Could not read main CSS"));
+static FONT_CSS: Lazy<String> =
+    Lazy::new(|| fs::read_to_string("fonts.css").expect("Could not read font CSS"));
+static PRISM_CSS: Lazy<String> =
+    Lazy::new(|| fs::read_to_string("prism.css").expect("Could not read prism CSS"));
 
 pub struct Document {
-    body: DOMTree<String>,
+    body: String,
     color_scheme: PreferredColorScheme,
 }
 
 impl Document {
-    pub fn new(body: DOMTree<String>, color_scheme: PreferredColorScheme) -> Document {
+    pub fn new(body: String, color_scheme: PreferredColorScheme) -> Document {
         Document { body, color_scheme }
     }
 }
