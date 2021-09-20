@@ -44,6 +44,6 @@ impl<'a> fmt::Display for Document {
             ""
         };
 
-        write!(f, "<!DOCTYPE><html>{}{}{}</html>", head, body, code)
+        write!(f, "<!DOCTYPE html><html>{}{}{}</html>", head, body, code)
     }
 }

@@ -72,6 +72,7 @@ pre {
     margin: 0;
     max-width: 44rem;
     padding: 4rem;
+    word-break: break-word;
 }
 h1 {
     font-size: 2rem;
@@ -93,7 +94,7 @@ p {
 
 @media (max-width: 44rem) {
     .content {
-        max-width: auto;
+        max-width: 100%;
         padding: 1rem;
     }
     .menu {
