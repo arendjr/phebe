@@ -262,9 +262,9 @@ const PROJECTS_CONTENT: &str = "<div class=\"content\">
     <p class=\"alternate\">
         <a href=\"https://fiberplane.dev/\"><b>Fiberplane</b></a><br>
         I am currently working at Fiberplane, where we are building exciting DevOps tooling.
-        One of the open-source projects I'm now contributing to is
-        <a href=\"https://github.com/arendjr/ts-rs\">ts-rs</a>,
-        for generating TypeScript types from Rust definitions.
+        As part of their efforts, I'm involved with
+        <a href=\"https://github.com/fiberplane/fp-bindgen\">fp-bindgen</a>,
+        a bindings generator for full-stack WASM plugins.
     </p>
     <p class=\"alternate\">
         <b>This website</b><br>
