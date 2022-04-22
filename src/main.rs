@@ -26,7 +26,7 @@ struct JsonPage {
 
 struct ArticleDef {
     href: &'static str,
-    filename: &'static str,
+    filename: Option<&'static str>,
     title: &'static str,
 }
 
@@ -69,38 +69,53 @@ const THEME_SELECTOR: &str = "<div class=\"theme-selector\">
 fn get_article_defs() -> Vec<ArticleDef> {
     vec![
         ArticleDef {
+            href: "https://fiberplane.dev/blog/creating-a-rich-text-editor-using-rust-and-react/",
+            filename: None,
+            title: "Creating a Rich Text Editor using Rust and React (Fiberplane)",
+        },
+        ArticleDef {
+            href: "https://fiberplane.dev/blog/writing-redux-reducers-in-rust/",
+            filename: None,
+            title: "Writing Redux reducers in Rust (Fiberplane)",
+        },
+        ArticleDef {
+            href: "https://fiberplane.dev/blog/announcing-fp-bindgen/",
+            filename: None,
+            title: "Announcing fp-bindgen (Fiberplane)",
+        },
+        ArticleDef {
             href: "/2021/09/js-pipe-proposal-battle-of-perspectives.html",
-            filename: "js-pipe-proposal-battle-of-perspectives",
+            filename: Some("js-pipe-proposal-battle-of-perspectives"),
             title: "JavaScript Pipe Operator Proposal: A Battle of Perspectives",
         },
         ArticleDef {
             href: "/2021/01/how-to-multiple-redux-slice-instances.html",
-            filename: "how-to-multiple-redux-slice-instances",
+            filename: Some("how-to-multiple-redux-slice-instances"),
             title: "Advanced Redux: How to create multiple instances of a state slice",
         },
         ArticleDef {
             href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
-            filename: "how-i-made-text-clipper-fastest-html",
+            filename: Some("how-i-made-text-clipper-fastest-html"),
             title: "How I made text-clipper the fastest HTML clipping library",
         },
         ArticleDef {
             href: "/2016/08/selectivity-v3-adds-react-support.html",
-            filename: "selectivity-v3-adds-react-support",
+            filename: Some("selectivity-v3-adds-react-support"),
             title: "Selectivity v3 adds React support",
         },
         ArticleDef {
             href: "/2015/05/selectivityjs-v110-improves-keyboard.html",
-            filename: "selectivityjs-v110-improves-keyboard",
+            filename: Some("selectivityjs-v110-improves-keyboard"),
             title: "Selectivity v1.1.0 improves keyboard support, adds Ruby Gem",
         },
         ArticleDef {
             href: "/2015/03/select3-v10-released.html",
-            filename: "select3-v10-released",
+            filename: Some("select3-v10-released"),
             title: "Selectivity v1.0 released",
         },
         ArticleDef {
             href: "/2015/02/creating-submenus-with-select3.html",
-            filename: "creating-submenus-with-select3",
+            filename: Some("creating-submenus-with-select3"),
             title: "Creating submenus with Selectivity.js",
         },
     ]
@@ -131,11 +146,13 @@ fn get_page_defs() -> Vec<PageDef> {
     ];
 
     for article_def in get_article_defs() {
-        pages.push(PageDef {
-            page: "articles",
-            href: article_def.href,
-            content: generate_article_content(&article_def),
-        });
+        if let Some(filename) = article_def.filename {
+            pages.push(PageDef {
+                page: "articles",
+                href: article_def.href,
+                content: generate_article_content(filename, article_def.title),
+            });
+        }
     }
 
     pages
@@ -368,15 +385,15 @@ fn generate_articles_content() -> String {
 </div>", links)
 }
 
-fn generate_article_content(article: &ArticleDef) -> String {
-    let content = fs::read_to_string(format!("articles/{}.html", article.filename))
-        .expect("Could not read article");
+fn generate_article_content(filename: &str, title: &str) -> String {
+    let content =
+        fs::read_to_string(format!("articles/{}.html", filename)).expect("Could not read article");
     format!(
         "<div class=\"content\">
-    <h1>{}</h1>
-    {}
+<h1>{}</h1>
+{}
 </div>",
-        article.title, content
+        title, content
     )
 }
 
