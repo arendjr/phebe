@@ -1,6 +1,10 @@
-#![recursion_limit = "512"]
+mod color_scheme;
+mod document;
 
 use bytes::Bytes;
+use color_scheme::PreferredColorScheme;
+use const_format::formatcp;
+use document::Document;
 use hyper::header::{HeaderMap, HeaderValue};
 use hyper::http::StatusCode;
 use hyper::service::{make_service_fn, service_fn};
@@ -9,13 +13,7 @@ use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::convert::Infallible;
-use std::fs;
 use std::net::SocketAddr;
-
-mod components;
-use components::PreferredColorScheme;
-
-use crate::components::Document;
 
 const PORT: u16 = 3000;
 
@@ -25,9 +23,9 @@ struct JsonPage {
 }
 
 struct ArticleDef {
-    href: &'static str,
-    filename: Option<&'static str>,
     title: &'static str,
+    href: &'static str,
+    content: Option<&'static str>,
 }
 
 struct PageDef {
@@ -36,107 +34,140 @@ struct PageDef {
     content: String,
 }
 
+static APPLICATION_JAVASCRIPT: Lazy<HeaderValue> =
+    Lazy::new(|| HeaderValue::from_static("application/javascript"));
 static APPLICATION_JSON: Lazy<HeaderValue> =
     Lazy::new(|| HeaderValue::from_static("application/json"));
-static MAIN_JS: Lazy<Bytes> = Lazy::new(|| {
-    fs::read_to_string("main.js")
-        .expect("Could not read main JS")
-        .into()
-});
-static PRISM_JS: Lazy<Bytes> = Lazy::new(|| {
-    fs::read_to_string("prism.js")
-        .expect("Could not read prism JS")
-        .into()
-});
-static PRISM_CSS: Lazy<Bytes> = Lazy::new(|| {
-    fs::read_to_string("prism.css")
-        .expect("Could not read prism CSS")
-        .into()
-});
-static DARK_PAGES: Lazy<HashMap<&'static str, Bytes>> =
-    Lazy::new(|| generate_static_pages(PreferredColorScheme::Dark));
-static JSON_PAGES: Lazy<HashMap<&'static str, Bytes>> = Lazy::new(generate_json_pages);
-static LIGHT_PAGES: Lazy<HashMap<&'static str, Bytes>> =
-    Lazy::new(|| generate_static_pages(PreferredColorScheme::Light));
+static TEXT_CSS: Lazy<HeaderValue> = Lazy::new(|| HeaderValue::from_static("text/css"));
+static TEXT_HTML: Lazy<HeaderValue> =
+    Lazy::new(|| HeaderValue::from_static("text/html; charset=UTF-8"));
+
+const MAIN_JS: &[u8] = include_bytes!("../statics/main.js");
+const PRISM_JS: &[u8] = include_bytes!("../statics/prism.js");
+const PRISM_CSS: &[u8] = include_bytes!("../statics/prism.css");
+
 static PAGES: Lazy<HashMap<&'static str, Bytes>> =
     Lazy::new(|| generate_static_pages(PreferredColorScheme::Unspecified));
+static DARK_PAGES: Lazy<HashMap<&'static str, Bytes>> =
+    Lazy::new(|| generate_static_pages(PreferredColorScheme::Dark));
+static LIGHT_PAGES: Lazy<HashMap<&'static str, Bytes>> =
+    Lazy::new(|| generate_static_pages(PreferredColorScheme::Light));
+static JSON_PAGES: Lazy<HashMap<&'static str, Bytes>> = Lazy::new(generate_json_pages);
 
 const THEME_SELECTOR: &str = "<div class=\"theme-selector\">
     <a class=\"dark\" href=\"?preferred_color_scheme=dark\">Dark theme</a>
     <a class=\"light\" href=\"?preferred_color_scheme=light\">Light theme</a>
 </div>";
 
-fn get_article_defs() -> Vec<ArticleDef> {
-    vec![
+const INDEX_CONTENT: &str = include_str!("../pages/index.html");
+const PEOPLE_CONTENT: &str = include_str!("../pages/people.html");
+const PROJECTS_CONTENT: &str = include_str!("../pages/projects.html");
+
+macro_rules! article_def {
+    ( $title: literal, $href: literal, $path: literal ) => {
         ArticleDef {
-            href: "https://fiberplane.dev/blog/creating-a-rich-text-editor-using-rust-and-react/",
-            filename: None,
-            title: "Creating a Rich Text Editor using Rust and React (Fiberplane)",
-        },
-        ArticleDef {
-            href: "https://fiberplane.dev/blog/writing-redux-reducers-in-rust/",
-            filename: None,
-            title: "Writing Redux reducers in Rust (Fiberplane)",
-        },
-        ArticleDef {
-            href: "https://fiberplane.dev/blog/announcing-fp-bindgen/",
-            filename: None,
-            title: "Announcing fp-bindgen (Fiberplane)",
-        },
-        ArticleDef {
-            href: "/2021/09/js-pipe-proposal-battle-of-perspectives.html",
-            filename: Some("js-pipe-proposal-battle-of-perspectives"),
-            title: "JavaScript Pipe Operator Proposal: A Battle of Perspectives",
-        },
-        ArticleDef {
-            href: "/2021/01/how-to-multiple-redux-slice-instances.html",
-            filename: Some("how-to-multiple-redux-slice-instances"),
-            title: "Advanced Redux: How to create multiple instances of a state slice",
-        },
-        ArticleDef {
-            href: "/2016/09/how-i-made-text-clipper-fastest-html.html",
-            filename: Some("how-i-made-text-clipper-fastest-html"),
-            title: "How I made text-clipper the fastest HTML clipping library",
-        },
-        ArticleDef {
-            href: "/2016/08/selectivity-v3-adds-react-support.html",
-            filename: Some("selectivity-v3-adds-react-support"),
-            title: "Selectivity v3 adds React support",
-        },
-        ArticleDef {
-            href: "/2015/05/selectivityjs-v110-improves-keyboard.html",
-            filename: Some("selectivityjs-v110-improves-keyboard"),
-            title: "Selectivity v1.1.0 improves keyboard support, adds Ruby Gem",
-        },
-        ArticleDef {
-            href: "/2015/03/select3-v10-released.html",
-            filename: Some("select3-v10-released"),
-            title: "Selectivity v1.0 released",
-        },
-        ArticleDef {
-            href: "/2015/02/creating-submenus-with-select3.html",
-            filename: Some("creating-submenus-with-select3"),
-            title: "Creating submenus with Selectivity.js",
-        },
-    ]
+            title: $title,
+            href: $href,
+            content: Some(wrap_content!(formatcp!(
+                "<h1>{}</h1>{}",
+                $title,
+                include_str!($path)
+            ))),
+        }
+    };
 }
+
+macro_rules! external_article_def {
+    ( $title: literal, $href: literal ) => {
+        ArticleDef {
+            title: $title,
+            href: $href,
+            content: None,
+        }
+    };
+}
+
+macro_rules! wrap_content {
+    ( $html: expr ) => {
+        formatcp!("<div class=\"content\">{}</div>", $html)
+    };
+}
+
+const ARTICLE_DEFS: &[ArticleDef] = &[
+    //article_def!(
+    //    "MVP: The Most Valuable Programmer",
+    //    "/2023/04/mvp-the-most-valuable-programmer",
+    //    "../articles/mvp-the-most-valuable-programmer.html"
+    //),
+    external_article_def!(
+        "Why we at Fiberplane use Operational Transformation instead of CRDT (Fiberplane)",
+        "https://fiberplane.com/blog/why-we-at-fiberplane-use-operational-transformation-instead-of-crdt"
+    ),
+    external_article_def!(
+        "Creating a Rich Text Editor using Rust and React (Fiberplane)",
+        "https://fiberplane.com/blog/creating-a-rich-text-editor-using-rust-and-react"
+    ),
+    external_article_def!(
+        "Writing Redux reducers in Rust (Fiberplane)",
+        "https://fiberplane.com/blog/writing-redux-reducers-in-rust"
+    ),
+    external_article_def!(
+        "Announcing fp-bindgen (Fiberplane)",
+        "https://fiberplane.com/blog/announcing-fp-bindgen/"
+    ),
+    article_def!(
+        "JavaScript Pipe Operator Proposal: A Battle of Perspectives",
+        "/2021/09/js-pipe-proposal-battle-of-perspectives.html",
+        "../articles/js-pipe-proposal-battle-of-perspectives.html"
+    ),
+    article_def!(
+        "Advanced Redux: How to create multiple instances of a state slice",
+        "/2021/01/how-to-multiple-redux-slice-instances.html",
+        "../articles/how-to-multiple-redux-slice-instances.html"
+    ),
+    article_def!(
+        "How I made text-clipper the fastest HTML clipping library",
+        "/2016/09/how-i-made-text-clipper-fastest-html.html",
+        "../articles/how-i-made-text-clipper-fastest-html.html"
+    ),
+    article_def!(
+        "Selectivity v3 adds React support",
+        "/2016/08/selectivity-v3-adds-react-support.html",
+        "../articles/selectivity-v3-adds-react-support.html"
+    ),
+    article_def!(
+        "Selectivity v1.1.0 improves keyboard support, adds Ruby Gem",
+        "/2015/05/selectivityjs-v110-improves-keyboard.html",
+        "../articles/selectivityjs-v110-improves-keyboard.html"
+    ),
+    article_def!(
+        "Selectivity v1.0 released",
+        "/2015/03/select3-v10-released.html",
+        "../articles/select3-v10-released.html"
+    ),
+    article_def!(
+        "Creating submenus with Selectivity.js",
+        "/2015/02/creating-submenus-with-select3.html",
+        "../articles/creating-submenus-with-select3.html"
+    ),
+];
 
 fn get_page_defs() -> Vec<PageDef> {
     let mut pages = vec![
         PageDef {
             page: "me",
             href: "/",
-            content: INDEX_CONTENT.to_owned(),
+            content: wrap_content!(INDEX_CONTENT).to_owned(),
         },
         PageDef {
             page: "people",
             href: "/people",
-            content: PEOPLE_CONTENT.to_owned(),
+            content: wrap_content!(PEOPLE_CONTENT).to_owned(),
         },
         PageDef {
             page: "projects",
             href: "/projects",
-            content: PROJECTS_CONTENT.to_owned(),
+            content: wrap_content!(PROJECTS_CONTENT).to_owned(),
         },
         PageDef {
             page: "articles",
@@ -145,12 +176,12 @@ fn get_page_defs() -> Vec<PageDef> {
         },
     ];
 
-    for article_def in get_article_defs() {
-        if let Some(filename) = article_def.filename {
+    for article_def in ARTICLE_DEFS {
+        if let Some(content) = article_def.content {
             pages.push(PageDef {
                 page: "articles",
                 href: article_def.href,
-                content: generate_article_content(filename, article_def.title),
+                content: content.to_owned(),
             });
         }
     }
@@ -189,12 +220,9 @@ fn generate_static_pages(color_scheme: PreferredColorScheme) -> HashMap<&'static
 }
 
 fn generate_document(page: &str, content: String, color_scheme: PreferredColorScheme) -> Bytes {
-    let body: String = format!(
-        "<body class=\"{}\">{}{}{}</body>",
-        page,
-        THEME_SELECTOR,
+    let body = format!(
+        "<body class=\"{page}\">{THEME_SELECTOR}{}{content}</body>",
         generate_menu(page),
-        content
     );
     Document::new(body, color_scheme).to_string().into()
 }
@@ -218,156 +246,13 @@ fn generate_menu_item(page: &str, href: &str, title: &str, active_page: &str) ->
     };
 
     format!(
-        "<li><a class=\"{}\" href=\"{}\">{}</a></li>",
+        "<li><a class=\"{}\" href=\"{href}\">{title}</a></li>",
         classes.join(" "),
-        href,
-        title
     )
 }
 
-const INDEX_CONTENT: &str = "<div class=\"content\">
-    <h1>Arend van Beelen jr.</h1>
-    <p>Welcome,</p>
-    <p>I am a software engineer by trade and an author for leasure.</p>
-    <p>Have a look around and may we get acquainted.</p>
-    <p>Yours,<br>Arend jr.</p>
-</div>";
-
-const PEOPLE_CONTENT: &str = "<div class=\"content\">
-    <h1>People</h1>
-    <p>My two passions are technology and writing, but neither would exist
-        without the people that create them. A good story without a convincing
-        protagonist inevitably falls flat. And good technology that doesn't
-        cater to the people will never be more than a curio. These are some of
-        the people that inspire my life...</p>
-    <p class=\"alternate-a\">
-        <a href=\"https://www.ciyuxu.nl\"><b>Ciyu Xu</b></a><br>
-        My loving wife with whom I live in Haarlem. She's a designer and frontend developer.
-    </p>
-    <p class=\"alternate-b\">
-        <b>Boris van Beelen</b><br>
-        Our beautiful son. He's a little too young to have his own online presence yet :)
-    </p>
-    <p class=\"alternate-a\">
-        <a href=\"https://www.aronsilver.com\"><b>Aron Silver</b></a><br>
-        A Dutch author of little renown, so far. I'm quite into his works...
-    </p>
-</div>";
-
-const PROJECTS_CONTENT: &str = "<div class=\"content\">
-    <h1>Projects</h1>
-    <p>Ever since my dad taught me my first few lines of BASIC, programming has
-        been my passion. I'll present the highlights from recent to old, to
-        spare you the history if you're not interested:</p>
-    <p class=\"alternate\">
-        <a href=\"https://fiberplane.dev/\"><b>Fiberplane</b></a><br>
-        I am currently working at Fiberplane, where we are building exciting DevOps tooling.
-        As part of their efforts, I'm involved with
-        <a href=\"https://github.com/fiberplane/fp-bindgen\">fp-bindgen</a>,
-        a bindings generator for full-stack WASM plugins.
-    </p>
-    <p class=\"alternate\">
-        <b>This website</b><br>
-        This website was custom-built in Rust as an exercise to get familiar
-        with the language. Don't expect any marvels, but feel free to look at
-        <a href=\"https://github.com/arendjr/phebe\">the source</a>.
-    </p>
-    <p class=\"alternate\">
-        <a href=\"https://www.speakap.com/\"><b>Speakap</b></a><br>
-        I was a Principal Software Engineer at Speakap, where I worked for over
-        7 years. Some open-source projects that I created for them are
-        <a href=\"https://github.com/arendjr/text-clipper\">text-clipper</a> and
-        <a href=\"http://arendjr.github.io/selectivity/\">Selectivity.js</a>.
-    </p>
-    <p class=\"alternate\">
-        <a href=\"https://play.google.com/store/apps/details?id=com.xiao_games.SudokuPi\"><b>Sudoku Pi</b></a><br>
-        Sudoku Pi is a finger-friendly Sudoku game for Android. Kudos to
-        <a href=\"https://www.ciyuxu.nl\">my wife</a> for the design.
-    </p>
-    <p class=\"alternate\">
-        <a href=\"https://github.com/arendjr/PlainText\"><b>PlainText</b></a><br>
-        PlainText is a MUD engine I originally built in C++ and JavaScript as
-        a hobby. A port to Rust (again as an exercise to gain experience) is
-        WIP.
-    </p>
-    <p class=\"alternate\">
-        <b>Hyves</b><br>
-        Hyves used to be the largest social network of the Netherlands. I worked
-        there for five-and-a-half years, leading the team that created the Hyves
-        Desktop suite using C++/Qt and web technologies. I also developed
-        several server-side features in PHP and worked on their chat server
-        created using Stackless Python. Finally, I also worked on their mobile
-        stack creating hybrid PhoneGap applications for Symbian, Android, iOS
-        and BlackBerry. Symbian in particular was a fun one, as I first had to
-        built the PhoneGap container itself in C++ :)<br>
-        An open-source project (now hopelessly outdated) I developed as part of
-        my employment there was
-        <a href=\"https://github.com/arendjr/woodpecker\">Woodpecker</a>, an
-        SCSS compiler written in Python.
-    </p>
-    <p class=\"alternate\">
-        <b>Distributed friend graph database</b><br>
-        For my university's master's project, which I did at Hyves, I created a
-        PoC for a distributed friend graph database in C++. It was able to
-        efficiently retrieve things like friend recommendations as well as
-        determine whether any two people shared a connection in the third
-        degree.
-    </p>
-    <p class=\"alternate\">
-        <a href=\"https://kde.org/\"><b>KDE project</b></a><br>
-        During my time at university I made several contributions to the KDE
-        project on the side. From the search bar for the Konqueror web browser
-        and the type-ahead-find feature in its KHTML rendering engine to
-        support for the Windows RDP protcol in the KDE Remote Desktop Client
-        application. For the latter, rather than reimplementing the RDP
-        protocol, I created a patch for the
-        <a href=\"https://www.rdesktop.org/\">rdesktop application</a> so that
-        its X11 window could be embedded into other windows, which was then
-        used by KRDC.
-    </p>
-    <p class=\"alternate\">
-        <b>Real-time raytracing engine</b><br>
-        For my university's bachelor's project me and three fellow students
-        developed a PoC real-time raytracing engine in C++ with CUDA support. Of
-        course, given the hardware at the time, this was only feasible on low
-        resolutions using various shortcuts, but it was an interesting project
-        nonetheless.
-    </p>
-    <p class=\"alternate\">
-        <b>Aukyla</b><br>
-        During my first part-time job, I worked as a solo developer in a
-        <a href=\"https://www.auton.nl/\">small automation firm</a> that lead to
-        the formation of Aukyla Software, where I did what every programmer did
-        at the time: Create their own PHP CMS. I created the
-        <a href=\"https://sourceforge.net/projects/aukyla/\">Aukyla PHP Framework</a>,
-        upon which I built <a href=\"https://sourceforge.net/projects/adms/\">ADMS</a>,
-        an intranet-focused Document Management System, and Aukyla Site Manager,
-        which powered several public websites at the time.
-    </p>
-    <p class=\"alternate\">
-        <a href=\"https://github.com/arendjr/Qivrit\"><b>Qivrit</b></a><br>
-        In order to help myself and fellow classmates in high-school improve our
-        natural language skills, I developed a little Windows application using
-        Borland C++ Builder. The concept was simple: You enter the lists of all
-        the words with their translations, and the program will question you on
-        your knowledge of them afterwards. I don't think I have the source to
-        this application anymore, but years later, as I made an attempt to learn
-        Hebrew, I wrote a similar program called Qivrit. This one was also
-        written in C++, but using Qt and tests both knowledge of the Hebrew
-        alphabet as well as basic vocabulary.
-    </p>
-    <p class=\"alternate\">
-        <b>Adventure</b><br>
-        One of my oldest hobby projects is a game: Adventure. If my memory
-        serves me right, the first version was created in QBASIC. When I started
-        using KDE, I made a port called
-        <a href=\"https://store.kde.org/p/1109408/\">KAdventure</a>.
-    </p>
-</div>";
-
 fn generate_articles_content() -> String {
-    let articles = get_article_defs();
-    let links = articles
+    let links = ARTICLE_DEFS
         .iter()
         .map(|article| {
             format!(
@@ -378,22 +263,12 @@ fn generate_articles_content() -> String {
         .collect::<Vec<_>>()
         .join("");
 
-    format!("<div class=\"content\">
-    <h1>Articles</h1>
-    <p>Not an avid blogger myself, I do write the occassional post. I've listed them here for your enjoyment:</p>
-    <ul>{}</ul>
-</div>", links)
-}
-
-fn generate_article_content(filename: &str, title: &str) -> String {
-    let content =
-        fs::read_to_string(format!("articles/{}.html", filename)).expect("Could not read article");
     format!(
-        "<div class=\"content\">
-<h1>{}</h1>
-{}
-</div>",
-        title, content
+        "<div class=\"content\">\
+            <h1>Articles</h1>\
+            <p>Not an avid blogger myself, I do write the occassional post. I've listed them here for your enjoyment:</p>\
+            <ul>{links}</ul>\
+        </div>"
     )
 }
 
@@ -425,20 +300,19 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let path = req.uri().path();
     if path == "/main.js" || path == "/prism.js" {
         let mut response = Response::new(Body::from(if path == "/prism.js" {
-            PRISM_JS.clone()
+            PRISM_JS
         } else {
-            MAIN_JS.clone()
+            MAIN_JS
         }));
-        response.headers_mut().insert(
-            "Content-Type",
-            HeaderValue::from_static("application/javascript"),
-        );
-        return Ok(response);
-    } else if path == "/prism.css" {
-        let mut response = Response::new(Body::from(PRISM_CSS.clone()));
         response
             .headers_mut()
-            .insert("Content-Type", HeaderValue::from_static("text/css"));
+            .insert("Content-Type", APPLICATION_JAVASCRIPT.clone());
+        return Ok(response);
+    } else if path == "/prism.css" {
+        let mut response = Response::new(Body::from(PRISM_CSS));
+        response
+            .headers_mut()
+            .insert("Content-Type", TEXT_CSS.clone());
         return Ok(response);
     }
 
@@ -462,7 +336,7 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
         }
 
         (
-            HeaderValue::from_static("text/html; charset=UTF-8"),
+            TEXT_HTML.clone(),
             match preferred_color_scheme {
                 PreferredColorScheme::Dark => &*DARK_PAGES,
                 PreferredColorScheme::Light => &*LIGHT_PAGES,
@@ -506,9 +380,9 @@ async fn main() {
     });
 
     let server = Server::bind(&address).serve(make_service);
-    println!("Listening on port {}...", PORT);
+    println!("Listening on port {PORT}...");
 
     if let Err(error) = server.await {
-        eprintln!("server error: {}", error);
+        eprintln!("server error: {error}");
     }
 }
