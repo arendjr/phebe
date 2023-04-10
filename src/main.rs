@@ -6,7 +6,8 @@ use color_scheme::PreferredColorScheme;
 use const_format::formatcp;
 use document::Document;
 use hyper::header::{HeaderMap, HeaderValue};
-use hyper::http::StatusCode;
+use hyper::http::response::Builder as ResponseBuilder;
+use hyper::http::{Error, StatusCode};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Request, Response, Server};
 use once_cell::sync::Lazy;
@@ -94,11 +95,11 @@ macro_rules! wrap_content {
 }
 
 const ARTICLE_DEFS: &[ArticleDef] = &[
-    //article_def!(
-    //    "MVP: The Most Valuable Programmer",
-    //    "/2023/04/mvp-the-most-valuable-programmer",
-    //    "../articles/mvp-the-most-valuable-programmer.html"
-    //),
+    article_def!(
+        "MVP: The Most Valuable Programmer",
+        "/2023/04/mvp-the-most-valuable-programmer",
+        "../articles/mvp-the-most-valuable-programmer.html"
+    ),
     external_article_def!(
         "Why we at Fiberplane use Operational Transformation instead of CRDT (Fiberplane)",
         "https://fiberplane.com/blog/why-we-at-fiberplane-use-operational-transformation-instead-of-crdt"
@@ -190,56 +191,50 @@ fn get_page_defs() -> Vec<PageDef> {
 }
 
 fn generate_json_pages() -> HashMap<&'static str, Bytes> {
-    let mut pages = HashMap::new();
-
-    for page_def in get_page_defs() {
-        pages.insert(
-            page_def.href,
-            serde_json::to_string(&JsonPage {
-                content: page_def.content.to_string(),
+    get_page_defs()
+        .into_iter()
+        .map(|page_def| {
+            let json = serde_json::to_string(&JsonPage {
+                content: page_def.content,
             })
-            .unwrap()
-            .into(),
-        );
-    }
+            .unwrap();
 
-    pages
+            (page_def.href, json.into())
+        })
+        .collect()
 }
 
 fn generate_static_pages(color_scheme: PreferredColorScheme) -> HashMap<&'static str, Bytes> {
-    let mut pages = HashMap::new();
-
-    for page_def in get_page_defs() {
-        pages.insert(
-            page_def.href,
-            generate_document(page_def.page, page_def.content, color_scheme),
-        );
-    }
-
-    pages
+    get_page_defs()
+        .into_iter()
+        .map(|page_def| {
+            let html = build_document(page_def.page, page_def.content, color_scheme);
+            (page_def.href, html)
+        })
+        .collect()
 }
 
-fn generate_document(page: &str, content: String, color_scheme: PreferredColorScheme) -> Bytes {
+fn build_document(page: &str, content: String, color_scheme: PreferredColorScheme) -> Bytes {
     let body = format!(
         "<body class=\"{page}\">{THEME_SELECTOR}{}{content}</body>",
-        generate_menu(page),
+        build_menu(page),
     );
     Document::new(body, color_scheme).to_string().into()
 }
 
-fn generate_menu(active_page: &str) -> String {
+fn build_menu(active_page: &str) -> String {
     let menu_items = vec![
-        generate_menu_item("me", "/", "Me", active_page),
-        generate_menu_item("people", "/people", "People", active_page),
-        generate_menu_item("projects", "/projects", "Projects", active_page),
-        generate_menu_item("articles", "/articles", "Articles", active_page),
+        build_menu_item("me", "/", "Me", active_page),
+        build_menu_item("people", "/people", "People", active_page),
+        build_menu_item("projects", "/projects", "Projects", active_page),
+        build_menu_item("articles", "/articles", "Articles", active_page),
         //generate_menu_item("contact", "/contact", "Contact", active_page)
     ];
 
     format!("<ul class=\"menu\">{}</ul>", menu_items.join(""))
 }
 
-fn generate_menu_item(page: &str, href: &str, title: &str, active_page: &str) -> String {
+fn build_menu_item(page: &str, href: &str, title: &str, active_page: &str) -> String {
     let mut classes = vec![page];
     if page == active_page {
         classes.push("active");
@@ -254,12 +249,7 @@ fn generate_menu_item(page: &str, href: &str, title: &str, active_page: &str) ->
 fn generate_articles_content() -> String {
     let links = ARTICLE_DEFS
         .iter()
-        .map(|article| {
-            format!(
-                "<li><a href=\"{}\">{}</a></li>",
-                article.href, article.title
-            )
-        })
+        .map(|&ArticleDef { title, href, .. }| format!("<li><a href=\"{href}\">{title}</a></li>"))
         .collect::<Vec<_>>()
         .join("");
 
@@ -276,44 +266,41 @@ fn get_cookie<'a>(
     headers: &'a HeaderMap<HeaderValue>,
     cookie_name: &'static str,
 ) -> Option<&'a str> {
-    if let Some(cookie) = headers.get("Cookie") {
-        if let Ok(cookie_str) = cookie.to_str() {
-            let cookies = cookie_str.split(';');
-            for cookie in cookies {
-                let parts: Vec<&str> = cookie.trim().split('=').collect();
-                if parts.len() == 2 && parts[0] == cookie_name {
-                    return Some(parts[1]);
-                }
-            }
-        }
-    }
-    None
+    let Some(cookie) = headers.get("Cookie") else {
+        return None;
+    };
+
+    let Ok(cookie_str) = cookie.to_str() else {
+        return None;
+    };
+
+    cookie_str
+        .split(';')
+        .filter_map(|cookie| cookie.split_once('='))
+        .find(|(name, _)| *name == cookie_name)
+        .map(|(_, value)| value)
 }
 
-fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+fn serve(req: Request<Body>) -> Result<Response<Body>, Error> {
     if req.method() != "GET" {
-        let mut response = Response::new(Body::from("Method Not Allowed"));
-        *response.status_mut() = StatusCode::METHOD_NOT_ALLOWED;
-        return Ok(response);
+        return Response::builder()
+            .status(StatusCode::METHOD_NOT_ALLOWED)
+            .body("Method Not Allowed".into());
     }
 
     let path = req.uri().path();
-    if path == "/main.js" || path == "/prism.js" {
-        let mut response = Response::new(Body::from(if path == "/prism.js" {
-            PRISM_JS
-        } else {
-            MAIN_JS
-        }));
-        response
-            .headers_mut()
-            .insert("Content-Type", APPLICATION_JAVASCRIPT.clone());
-        return Ok(response);
+    if path == "/main.js" {
+        return Response::builder()
+            .header("Content-Type", APPLICATION_JAVASCRIPT.clone())
+            .body(MAIN_JS.into());
+    } else if path == "/prism.js" {
+        return Response::builder()
+            .header("Content-Type", APPLICATION_JAVASCRIPT.clone())
+            .body(PRISM_JS.into());
     } else if path == "/prism.css" {
-        let mut response = Response::new(Body::from(PRISM_CSS));
-        response
-            .headers_mut()
-            .insert("Content-Type", TEXT_CSS.clone());
-        return Ok(response);
+        return Response::builder()
+            .header("Content-Type", TEXT_CSS.clone())
+            .body(PRISM_CSS.into());
     }
 
     let color_scheme_override = match req.uri().query() {
@@ -325,15 +312,15 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     let (content_type, pages) = if req.headers().get("Accept") == Some(&*APPLICATION_JSON) {
         (APPLICATION_JSON.clone(), &*JSON_PAGES)
     } else {
-        let mut preferred_color_scheme = match get_cookie(req.headers(), "color_scheme") {
-            Some("light") => PreferredColorScheme::Light,
-            Some("dark") => PreferredColorScheme::Dark,
-            _ => PreferredColorScheme::Unspecified,
+        let preferred_color_scheme = if color_scheme_override == PreferredColorScheme::Unspecified {
+            match get_cookie(req.headers(), "color_scheme") {
+                Some("light") => PreferredColorScheme::Light,
+                Some("dark") => PreferredColorScheme::Dark,
+                _ => PreferredColorScheme::Unspecified,
+            }
+        } else {
+            color_scheme_override
         };
-
-        if color_scheme_override != PreferredColorScheme::Unspecified {
-            preferred_color_scheme = color_scheme_override;
-        }
 
         (
             TEXT_HTML.clone(),
@@ -346,27 +333,34 @@ fn serve(req: Request<Body>) -> Result<Response<Body>, Infallible> {
     };
 
     match pages.get(req.uri().path()) {
-        Some(page) => {
-            let mut response = Response::new(Body::from(page.clone()));
-            response.headers_mut().insert("Content-Type", content_type);
-            if color_scheme_override != PreferredColorScheme::Unspecified {
-                response.headers_mut().insert(
-                    "Set-Cookie",
-                    HeaderValue::from_static(
-                        if color_scheme_override == PreferredColorScheme::Dark {
-                            "color_scheme=dark; Path=/"
-                        } else {
-                            "color_scheme=light; Path=/"
-                        },
-                    ),
-                );
-            }
-            Ok(response)
-        }
-        None => {
-            let mut response = Response::new(Body::from("Not Found"));
-            *response.status_mut() = StatusCode::NOT_FOUND;
-            Ok(response)
+        Some(page) => Response::builder()
+            .header("Content-Type", content_type)
+            .header("Vary", "Accept")
+            .color_scheme_cookie(color_scheme_override)
+            .body(page.clone().into()),
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("Not Found".into()),
+    }
+}
+
+trait ColorSchemeExt {
+    fn color_scheme_cookie(self, color_scheme_override: PreferredColorScheme) -> Self;
+}
+
+impl ColorSchemeExt for ResponseBuilder {
+    fn color_scheme_cookie(self, color_scheme_override: PreferredColorScheme) -> Self {
+        if color_scheme_override == PreferredColorScheme::Unspecified {
+            self
+        } else {
+            self.header(
+                "Set-Cookie",
+                HeaderValue::from_static(if color_scheme_override == PreferredColorScheme::Dark {
+                    "color_scheme=dark; Path=/"
+                } else {
+                    "color_scheme=light; Path=/"
+                }),
+            )
         }
     }
 }
