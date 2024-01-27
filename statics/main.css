@@ -1,6 +1,11 @@
 * {
     box-sizing: border-box;
 }
+
+html {
+    font-size: max(16pt, 1.3vw);
+}
+
 body {
     align-content: flex-start;
     color: #111;
@@ -9,21 +14,30 @@ body {
     margin: 0;
     padding: 0;
 }
-body, p, h1, h2, h3 {
+
+body,
+p,
+h1,
+h2,
+h3 {
     font-family: "Noto Sans JP", sans-serif;
     font-weight: 300;
 }
+
 a {
     transition: color 2s ease-in-out, opacity 0.4s ease-in;
 }
+
 b {
     font-weight: 600;
 }
 
-code, pre {
+code,
+pre {
     border-radius: 5px;
     font-family: "Source Code Pro", monospace;
 }
+
 pre {
     background-color: #2e2e2e;
     color: #d6d6d6;
@@ -39,10 +53,12 @@ pre {
     right: 0;
     top: 0;
 }
-.theme-selector > a {
+
+.theme-selector>a {
     opacity: 0.5;
 }
-.theme-selector > a:hover {
+
+.theme-selector>a:hover {
     opacity: 0.9;
 }
 
@@ -52,17 +68,21 @@ pre {
     padding: 8rem 4rem 4rem;
     width: 12rem;
 }
-.menu > li {
+
+.menu>li {
     display: block;
 }
-.menu > li > a {
+
+.menu>li>a {
     opacity: 0.6;
     text-decoration: none;
 }
-.menu > li > a.active {
+
+.menu>li>a.active {
     opacity: 1;
 }
-.menu > li > a:hover:not(.active) {
+
+.menu>li>a:hover:not(.active) {
     opacity: 0.9;
     text-decoration: underline;
 }
@@ -74,20 +94,24 @@ pre {
     padding: 4rem;
     word-break: break-word;
 }
+
 h1 {
     font-size: 2rem;
     margin: 1rem 0;
     margin-block-start: 0;
     margin-block-end: 0;
 }
+
 p {
     font-size: 1rem;
     margin: 1rem 0;
 }
+
 .alternate:nth-child(odd) {
     padding-left: 1rem;
     padding-right: 3rem;
 }
+
 .alternate:nth-child(even) {
     padding-left: 4rem;
 }
@@ -97,6 +121,7 @@ p {
         max-width: 100%;
         padding: 1rem;
     }
+
     .menu {
         padding: 1rem;
         width: auto;
