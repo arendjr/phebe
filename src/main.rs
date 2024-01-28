@@ -96,6 +96,11 @@ macro_rules! wrap_content {
 
 const ARTICLE_DEFS: &[ArticleDef] = &[
     article_def!(
+        "Why I'm excited for Biome's type inference",
+        "/2024/01/why-im-excited-for-biomes-type-inference",
+        "../articles/why-im-excited-for-biomes-type-inference.html"
+    ),
+    article_def!(
         "MVP: The Most Valuable Programmer",
         "/2023/04/mvp-the-most-valuable-programmer",
         "../articles/mvp-the-most-valuable-programmer.html"
