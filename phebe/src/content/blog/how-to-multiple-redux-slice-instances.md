@@ -1,7 +1,7 @@
 ---
 title: "Advanced Redux: How to create multiple instances of a state slice"
 description: "This post describes a technique for creating multiple instances of a Redux state slice within the same store."
-pubDate: "Feb 2 2021"
+pubDate: "Jan 31 2021"
 ---
 
 This post describes a technique for creating multiple instances of a Redux state slice within the same store. I believe this technique can be useful if your application deals with multiple tabs or documents.
