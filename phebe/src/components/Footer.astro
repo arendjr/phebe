@@ -1,0 +1,30 @@
+---
+import { SOCIALS } from "../consts";
+
+const today = new Date();
+---
+
+<footer>
+    &copy; {today.getFullYear()} Arend van Beelen jr. All rights reserved.
+    <div class="social-links">
+        {
+            SOCIALS.map(social => (
+                <a href={social.link} target="_blank">
+                    <span class="sr-only">{social.name}</span>
+                </a>
+            ))
+        }
+    </div>
+</footer>
+<style>
+    footer {
+        padding: 2em 1em 6em 1em;
+        text-align: center;
+    }
+    .social-links {
+        display: flex;
+        justify-content: center;
+        gap: 1em;
+        margin-top: 1em;
+    }
+</style>

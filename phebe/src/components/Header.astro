@@ -1,0 +1,72 @@
+---
+import HeaderLink from "./HeaderLink.astro";
+import { SITE_TITLE, SOCIALS } from "../consts";
+import ThemeIcon from "./ThemeIcon.astro";
+---
+
+<header>
+    <nav>
+        <div class="internal-links">
+            <HeaderLink href="/">{SITE_TITLE}</HeaderLink>
+            <HeaderLink href="/blog">Blog</HeaderLink>
+            <HeaderLink href="/projects">Projects</HeaderLink>
+            <HeaderLink href="/consulting">Consulting</HeaderLink>
+        </div>
+        <ThemeIcon />
+        <div class="social-links">
+            {
+                SOCIALS.map(social => (
+                    <a
+                        href={social.link}
+                        target="_blank"
+                        set:html={social.icon}
+                    />
+                ))
+            }
+        </div>
+    </nav>
+</header>
+<style>
+    header {
+        margin: 0;
+        padding: 0 1em;
+    }
+    h2 {
+        margin: 0;
+        font-size: 1em;
+    }
+
+    h2 a,
+    h2 a.active {
+        text-decoration: none;
+    }
+    nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    nav a {
+        padding: 1em 0.5em;
+        border-bottom: 4px solid transparent;
+        text-decoration: none;
+    }
+    nav a.active {
+        text-decoration: none;
+        border-bottom-color: var(--accent);
+    }
+    .internal-links {
+        flex: 1;
+    }
+    .social-links {
+        margin-left: 30px;
+    }
+    .social-links,
+    .social-links a {
+        display: flex;
+    }
+    @media (max-width: 720px) {
+        .social-links {
+            display: none;
+        }
+    }
+</style>

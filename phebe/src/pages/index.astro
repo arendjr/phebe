@@ -1,0 +1,39 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts";
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+    </head>
+    <body>
+        <Header />
+        <main>
+            <h1>Welcome,</h1>
+            <p>
+                I am an independent software engineer/architect by trade, and a
+                novelist for leasure.
+            </p>
+            <p>
+                I'm available for <a href="/consulting"
+                    >consulting and contracting</a
+                >.
+            </p>
+            <p>
+                If you're interested in my writing, head over to <a
+                    href="https://aronsilver.com/"
+                    target="_blank">aronsilver.com</a
+                >.
+            </p>
+            <p>
+                Yours,<br />
+                Arend jr.
+            </p>
+        </main>
+        <Footer />
+    </body>
+</html>

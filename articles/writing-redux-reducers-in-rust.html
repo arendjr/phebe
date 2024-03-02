@@ -1,0 +1,252 @@
+<h3>Introduction</h3>
+<p>At Fiberplane, we are building a collaborative notebook editor for
+    incident response and infrastructure debugging. As part of the challenges we faced implementing such an editor, we
+    had several complex functions written in Rust that we had to use on the frontend through WebAssembly.</p>
+<p>This post will explore how we integrated this WASM code into a
+    React/Redux application, as well as why we ended up writing our own bindings generator for it.</p>
+<h3>Initial solution: Wasm-bindgen to the rescue</h3>
+<p>The way we initially integrated our Rust code was relatively
+    straightforward: We simply used&nbsp;<a href="https://github.com/rustwasm/wasm-bindgen"
+        rel="noopener">wasm-bindgen</a>, the go-to tool for integrating
+    Rust WASM code in the browser. The functions that implemented our business logic were pure functions that we invoked
+    from our Redux thunks and reducers as appropriate. All the code that dealt with Redux directly was still being
+    written in TypeScript.</p>
+<p>Everything worked but some pain points quickly emerged. While
+    wasm-bindgen allows for passing complex data structures back and forth through JSON serialization, we ran into some
+    practical limitations:</p>
+<ul
+    style="--framer-font-size: 16px; --framer-text-alignment: start; --framer-text-color: rgb(102, 102, 102); --framer-text-transform: none;">
+    <li data-preset-tag="p">
+        <p><strong>Rust structs were exposed as
+                classes to TypeScript.</strong>&nbsp;This didn’t match our usage of plain-old objects that we wished to
+            store in our Redux state. Worse, type-safe enums were not supported at all. This led us to use&nbsp;<a
+                href="https://github.com/Aleph-Alpha/ts-rs" rel="noopener">ts-rs</a>&nbsp;for generating our TypeScript
+            types, with manually written glue code where
+            we had to pass objects with types generated from&nbsp;ts-rs&nbsp;into functions generated
+            by&nbsp;wasm-bindgen. Again, things worked, but the solution was becoming increasingly brittle.</p>
+    </li>
+    <li data-preset-tag="p">
+        <p><strong>Serialization overhead also
+                became an issue.</strong>&nbsp;Exposing pure functions was great for testability but some operations
+            were large and passing them back and forth across the WASM bridge repeatedly became a bottleneck for us.
+            This was especially problematic when a client had to perform conflict resolution. This is a complex
+            procedure that involves several round-trips in and out of WASM. This eventually made us rethink how we did
+            our state management...</p>
+    </li>
+</ul>
+<h3>Iteration: Moving the Reducers into Rust</h3>
+<p>When your core logic is written in Rust, while your state is managed
+    in TypeScript, you have an impedance mismatch. Every time you want to invoke your logic, you pay the price of
+    serializing the relevant state back and forth. We could not escape this problem entirely (we still needed to have
+    state in TypeScript, so that React could render it), but we minimized its impact by moving our state into Rust.</p>
+<p>How we did this, you might ask?</p>
+<h3>1. Write Reducers in Rust</h3>
+<p>First, we ported our reducers to Rust. This resulted in reducers with
+    signatures such as this one:</p>
+<div style="height: auto; width: 100%;">
+    <div
+        style="--cb-colors-surface1-light: #ffffff; --cb-colors-surface2-light: #F3F3F3; --cb-colors-surface3-light: #f5f5f5; --cb-colors-clickable-light: #959da5; --cb-colors-base-light: #24292e; --cb-colors-disabled-light: #d1d4d8; --cb-colors-hover-light: #24292e; --cb-colors-accent-light: #24292e; --cb-syntax-color-keyword-light: #d73a49; --cb-syntax-color-property-light: #005cc5; --cb-syntax-color-plain-light: #24292e; --cb-syntax-color-static-light: #032f62; --cb-syntax-color-string-light: #032f62; --cb-syntax-color-definition-light: #6f42c1; --cb-syntax-color-punctuation-light: #24292e; --cb-syntax-color-tag-light: #22863a; --cb-syntax-color-comment-light: #6a737d; --cb-syntax-fontStyle-comment-light: normal; --cb-color-scheme-light: light; --cb-colors-surface1-dark: #ffffff; --cb-colors-surface2-dark: #F3F3F3; --cb-colors-surface3-dark: #f5f5f5; --cb-colors-clickable-dark: #959da5; --cb-colors-base-dark: #24292e; --cb-colors-disabled-dark: #d1d4d8; --cb-colors-hover-dark: #24292e; --cb-colors-accent-dark: #24292e; --cb-syntax-color-keyword-dark: #d73a49; --cb-syntax-color-property-dark: #005cc5; --cb-syntax-color-plain-dark: #24292e; --cb-syntax-color-static-dark: #032f62; --cb-syntax-color-string-dark: #032f62; --cb-syntax-color-definition-dark: #6f42c1; --cb-syntax-color-punctuation-dark: #24292e; --cb-syntax-color-tag-dark: #22863a; --cb-syntax-color-comment-dark: #6a737d; --cb-syntax-fontStyle-comment-dark: normal; --cb-color-scheme-dark: light; position: relative; width: 100%; height: 100%;">
+        <div class="sp-573219155 sp-c-fVPbOs sp-c-fVPbOs-LrWkf-variant-dark sp-wrapper" style="height: 100%;">
+            <div class="sp-c-ikJbEZ sp-layout"
+                style="height: 100%; --sp-layout-height: 100%; --cb-padding: 24px; border-style: solid; border-color: rgb(238, 238, 238); border-width: 1px; border-radius: 16px; transform: unset; overflow: hidden;">
+                <div class="sp-c-euXojQ sp-editor sp-stack" style="letter-spacing: 0em;">
+                    <div class="sp-c-gtcpyq sp-code-editor cb-code-editor">
+                        <pre class="sp-pristine sp-rust sp-c-jOWzsE sp-c-jkvvao sp-cm"
+                            translate="no"><div class="cm-editor ͼ1 ͼ2 ͼ1q"><div style="position: fixed; top: -10000px;" aria-live="polite"></div><div tabindex="-1" class="cm-scroller"><div style="tab-size: 4;" spellcheck="false" autocorrect="off" autocapitalize="none" translate="no" contenteditable="false" class="cm-content cm-readonly" role="textbox" aria-multiline="true" aria-readonly="true" data-language="rust" data-gramm="false" data-lt-active="false" aria-label="Code Editor for example.rs"><div class="cm-line"><span class="sp-syntax-keyword">fn</span> <span class="sp-syntax-definition">reducer</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">state</span>: &amp;State<span class="sp-syntax-punctuation">,</span> <span class="sp-syntax-plain">action</span>: Action<span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">-&gt;</span> <span class="sp-syntax-punctuation">(</span>State<span class="sp-syntax-punctuation">,</span> Vec&lt;SideEffectDescriptor&gt;<span class="sp-syntax-punctuation">)</span></div></div></div></div></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>These are pure functions, just as reducers should be. They take an
+    existing state and an action, and return a new state. They also return a list of side effect descriptors, which
+    we’ll talk about later.</p>
+<h3>2. Expose Reducers to TypeScript</h3>
+<p>Next, we expose these reducers to TypeScript, while avoiding having
+    to serialize the state across the bridge:</p>
+<div style="height: auto; width: 100%;">
+    <div
+        style="--cb-colors-surface1-light: #ffffff; --cb-colors-surface2-light: #F3F3F3; --cb-colors-surface3-light: #f5f5f5; --cb-colors-clickable-light: #959da5; --cb-colors-base-light: #24292e; --cb-colors-disabled-light: #d1d4d8; --cb-colors-hover-light: #24292e; --cb-colors-accent-light: #24292e; --cb-syntax-color-keyword-light: #d73a49; --cb-syntax-color-property-light: #005cc5; --cb-syntax-color-plain-light: #24292e; --cb-syntax-color-static-light: #032f62; --cb-syntax-color-string-light: #032f62; --cb-syntax-color-definition-light: #6f42c1; --cb-syntax-color-punctuation-light: #24292e; --cb-syntax-color-tag-light: #22863a; --cb-syntax-color-comment-light: #6a737d; --cb-syntax-fontStyle-comment-light: normal; --cb-color-scheme-light: light; --cb-colors-surface1-dark: #ffffff; --cb-colors-surface2-dark: #F3F3F3; --cb-colors-surface3-dark: #f5f5f5; --cb-colors-clickable-dark: #959da5; --cb-colors-base-dark: #24292e; --cb-colors-disabled-dark: #d1d4d8; --cb-colors-hover-dark: #24292e; --cb-colors-accent-dark: #24292e; --cb-syntax-color-keyword-dark: #d73a49; --cb-syntax-color-property-dark: #005cc5; --cb-syntax-color-plain-dark: #24292e; --cb-syntax-color-static-dark: #032f62; --cb-syntax-color-string-dark: #032f62; --cb-syntax-color-definition-dark: #6f42c1; --cb-syntax-color-punctuation-dark: #24292e; --cb-syntax-color-tag-dark: #22863a; --cb-syntax-color-comment-dark: #6a737d; --cb-syntax-fontStyle-comment-dark: normal; --cb-color-scheme-dark: light; position: relative; width: 100%; height: 100%;">
+        <div class="sp-573219155 sp-c-fVPbOs sp-c-fVPbOs-LrWkf-variant-dark sp-wrapper" style="height: 100%;">
+            <div class="sp-c-ikJbEZ sp-layout"
+                style="height: 100%; --sp-layout-height: 100%; --cb-padding: 24px; border-style: solid; border-color: rgb(238, 238, 238); border-width: 1px; border-radius: 16px; transform: unset; overflow: hidden;">
+                <div class="sp-c-euXojQ sp-editor sp-stack" style="letter-spacing: 0em;">
+                    <div class="sp-c-gtcpyq sp-code-editor cb-code-editor">
+                        <pre class="sp-pristine sp-typescript sp-c-jOWzsE sp-c-jkvvao sp-cm"
+                            translate="no"><div class="cm-editor ͼ1 ͼ2 ͼ1x"><div style="position: fixed; top: -10000px;" aria-live="polite"></div><div tabindex="-1" class="cm-scroller"><div style="tab-size: 4;" spellcheck="false" autocorrect="off" autocapitalize="none" translate="no" contenteditable="false" class="cm-content cm-readonly" role="textbox" aria-multiline="true" aria-readonly="true" data-language="typescript" data-gramm="false" data-lt-active="false" aria-label="Code Editor for example.ts"><div class="cm-line"><span class="sp-syntax-plain">static </span><span class="sp-syntax-plain">mut </span>STATE<span class="sp-syntax-punctuation">:</span> <span class="sp-syntax-definition">Lazy</span>&lt;RefCell&lt;State&gt;&gt; = Lazy<span class="sp-syntax-punctuation">:</span><span class="sp-syntax-punctuation">:</span><span class="sp-syntax-keyword">new</span><span class="sp-syntax-punctuation">(</span>|| <span class="sp-syntax-plain">RefCell</span><span class="sp-syntax-punctuation">:</span><span class="sp-syntax-punctuation">:</span><span class="sp-syntax-keyword">new</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">State</span><span class="sp-syntax-punctuation">:</span>:<span class="sp-syntax-keyword">default</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span></div><div class="cm-line"><br></div><div class="cm-line">#<span class="sp-syntax-punctuation">[</span><span class="sp-syntax-definition">fp_export_impl</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">protocol_bindings</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">]</span></div><div class="cm-line"><span class="sp-syntax-plain">fn </span><span class="sp-syntax-definition">reducer_bridge</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">:</span> Action<span class="sp-syntax-punctuation">)</span> -&gt; <span class="sp-syntax-plain">ReducerResult</span> <span class="sp-syntax-punctuation">{</span></div><div class="cm-line">    <span class="sp-syntax-comment">// This is safe as long as we only call this from a single-threaded WASM context:</span></div><div class="cm-line">    <span class="sp-syntax-plain">unsafe </span><span class="sp-syntax-punctuation">{</span></div><div class="cm-line">        <span class="sp-syntax-keyword">let</span> <span class="sp-syntax-plain">old_state</span> = <span class="sp-syntax-plain">STATE</span>.<span class="sp-syntax-property">get_mut</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span></div><div class="cm-line">        <span class="sp-syntax-keyword">let</span> <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">new_state</span><span class="sp-syntax-punctuation">,</span> <span class="sp-syntax-plain">side_effects</span><span class="sp-syntax-punctuation">)</span> = <span class="sp-syntax-definition">reducer</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">old_state</span><span class="sp-syntax-punctuation">,</span> <span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span></div><div class="cm-line"><br></div><div class="cm-line">        <span class="sp-syntax-keyword">let</span> <span class="sp-syntax-plain">state_update</span> = <span class="sp-syntax-plain">StateUpdate</span><span class="sp-syntax-punctuation">:</span><span class="sp-syntax-punctuation">:</span><span class="sp-syntax-definition">from_states</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">old_state</span><span class="sp-syntax-punctuation">,</span> &amp;<span class="sp-syntax-plain">new_state</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span></div><div class="cm-line"><br></div><div class="cm-line">        <span class="sp-syntax-plain">STATE</span>.<span class="sp-syntax-property">replace</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">new_state</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span></div><div class="cm-line"><br></div><div class="cm-line">        <span class="sp-syntax-plain">ReducerResult </span><span class="sp-syntax-punctuation">{</span></div><div class="cm-line">            <span class="sp-syntax-plain">state_update</span><span class="sp-syntax-punctuation">,</span></div><div class="cm-line">            <span class="sp-syntax-plain">side_effects</span><span class="sp-syntax-punctuation">,</span></div><div class="cm-line">        <span class="sp-syntax-punctuation">}</span></div><div class="cm-line">    <span class="sp-syntax-punctuation">}</span></div><div class="cm-line"><span class="sp-syntax-punctuation">}</span></div></div></div></div></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>There’s a couple of things going on here:</p>
+<ul
+    style="--framer-font-size: 16px; --framer-text-alignment: start; --framer-text-color: rgb(102, 102, 102); --framer-text-transform: none;">
+    <li data-preset-tag="p">
+        <p>On the first line of code we see the state instance that
+            lives in Rust. It’s a global mutable variable. This is generally frowned upon because this is unsafe in a
+            multi-threaded environment. For us it’s okay, since we only use this in a single-threaded WASM environment.
+        </p>
+    </li>
+    <li data-preset-tag="p">
+        <p>Next, we see the reducer function itself, which has a few
+            noteworthy features:</p>
+        <ul>
+            <li data-preset-tag="p">
+                <p><strong>No state is passed
+                        in.</strong>&nbsp;This way only actions still need to be serialized on reducer invocations,
+                    while the global state is injected in the body. And after the call to the original reducer, the
+                    global state is replaced with the new state.</p>
+            </li>
+            <li data-preset-tag="p">
+                <p>A&nbsp;ReducerResult&nbsp;type is returned which
+                    contains the side effect descriptors and a&nbsp;state_update&nbsp;field.
+                    This&nbsp;state_update&nbsp;is effectively a diff between the old state and the new state, so that
+                    we only need to serialize parts of the new state that have actually changed. If your state is small,
+                    you probably can get away with simply returning the full new state. Unfortunately, our state is
+                    pretty large at this point, so that was not an option for us.</p>
+            </li>
+            <li data-preset-tag="p">
+                <p><strong>An&nbsp;#[fp_export_impl]&nbsp;annotation</strong>&nbsp;that provides a
+                    little spoiler for our new bindings generator, which we will discuss below.</p>
+            </li>
+        </ul>
+    </li>
+</ul>
+<h3>3. Call the Reducer from TypeScript</h3>
+<p>We still have regular Redux reducers in TypeScript, as not all of our
+    state slices live in Rust (let’s face it, not all reducers&nbsp;<em>need</em>&nbsp;to be in
+    Rust, and it’s simpler&nbsp;<em>not</em>&nbsp;to move them). For those that do live in Rust, the
+    respective TypeScript reducers invoke their Rust counterparts:</p>
+<div style="height: auto; width: 100%;">
+    <div
+        style="--cb-colors-surface1-light: #ffffff; --cb-colors-surface2-light: #F3F3F3; --cb-colors-surface3-light: #f5f5f5; --cb-colors-clickable-light: #959da5; --cb-colors-base-light: #24292e; --cb-colors-disabled-light: #d1d4d8; --cb-colors-hover-light: #24292e; --cb-colors-accent-light: #24292e; --cb-syntax-color-keyword-light: #d73a49; --cb-syntax-color-property-light: #005cc5; --cb-syntax-color-plain-light: #24292e; --cb-syntax-color-static-light: #032f62; --cb-syntax-color-string-light: #032f62; --cb-syntax-color-definition-light: #6f42c1; --cb-syntax-color-punctuation-light: #24292e; --cb-syntax-color-tag-light: #22863a; --cb-syntax-color-comment-light: #6a737d; --cb-syntax-fontStyle-comment-light: normal; --cb-color-scheme-light: light; --cb-colors-surface1-dark: #ffffff; --cb-colors-surface2-dark: #F3F3F3; --cb-colors-surface3-dark: #f5f5f5; --cb-colors-clickable-dark: #959da5; --cb-colors-base-dark: #24292e; --cb-colors-disabled-dark: #d1d4d8; --cb-colors-hover-dark: #24292e; --cb-colors-accent-dark: #24292e; --cb-syntax-color-keyword-dark: #d73a49; --cb-syntax-color-property-dark: #005cc5; --cb-syntax-color-plain-dark: #24292e; --cb-syntax-color-static-dark: #032f62; --cb-syntax-color-string-dark: #032f62; --cb-syntax-color-definition-dark: #6f42c1; --cb-syntax-color-punctuation-dark: #24292e; --cb-syntax-color-tag-dark: #22863a; --cb-syntax-color-comment-dark: #6a737d; --cb-syntax-fontStyle-comment-dark: normal; --cb-color-scheme-dark: light; position: relative; width: 100%; height: 100%;">
+        <div class="sp-573219155 sp-c-fVPbOs sp-c-fVPbOs-LrWkf-variant-dark sp-wrapper" style="height: 100%;">
+            <div class="sp-c-ikJbEZ sp-layout"
+                style="height: 100%; --sp-layout-height: 100%; --cb-padding: 24px; border-style: solid; border-color: rgb(238, 238, 238); border-width: 1px; border-radius: 16px; transform: unset; overflow: hidden;">
+                <div class="sp-c-euXojQ sp-editor sp-stack" style="letter-spacing: 0em;">
+                    <div class="sp-c-gtcpyq sp-code-editor cb-code-editor">
+                        <pre class="sp-pristine sp-typescript sp-c-jOWzsE sp-c-jkvvao sp-cm" translate="no"><code class="sp-c-fWymNx sp-pre-placeholder" style="margin-left: var(--sp-space-4);"><span class="sp-syntax-keyword">export</span> <span class="sp-syntax-keyword">default</span> <span class="sp-syntax-keyword">function</span> <span class="sp-syntax-definition">reducer</span><span class="sp-syntax-punctuation">(</span>
+    <span class="sp-syntax-plain">state</span> = <span class="sp-syntax-plain">initialState</span><span class="sp-syntax-punctuation">,</span>
+    <span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">:</span> Action
+<span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">:</span> StateWithSideEffects&lt;State&gt; <span class="sp-syntax-punctuation">{</span>
+    <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-plain">result</span> = <span class="sp-syntax-definition">reducerBridge</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span> <span class="sp-syntax-comment">// This calls the Rust reducer.</span>
+    <span class="sp-syntax-plain">state</span> = <span class="sp-syntax-definition">stateUpdateReducer</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">state</span><span class="sp-syntax-punctuation">,</span> <span class="sp-syntax-plain">result</span>.<span class="sp-syntax-property">stateUpdate</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span>
+
+    <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-punctuation">{</span> <span class="sp-syntax-property">sideEffects</span> <span class="sp-syntax-punctuation">}</span> = <span class="sp-syntax-plain">result</span><span class="sp-syntax-punctuation">;</span>
+    <span class="sp-syntax-keyword">return</span> <span class="sp-syntax-punctuation">{</span> <span class="sp-syntax-property">state</span><span class="sp-syntax-punctuation">,</span> <span class="sp-syntax-property">sideEffects</span> <span class="sp-syntax-punctuation">}</span><span class="sp-syntax-punctuation">;</span>
+<span class="sp-syntax-punctuation">}</span></code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>The main takeaway here is that we invoke the Rust reducer without
+    passing along the state but instead we update the Redux state using the&nbsp;stateUpdate&nbsp;that we received as
+    part of the&nbsp;ReducerResult(our&nbsp;state_update&nbsp;field from the previous section, as our bindings
+    automatically convert between casing conventions). We use a separate&nbsp;stateUpdateReducer()&nbsp;that applies the
+    returned update, which I omitted for brevity.</p>
+<p>At this point, you can see that we do indeed have two copies of our
+    state: One in TypeScript and one in Rust. The TypeScript one is used for rendering in React, while the one in Rust
+    is the real source of truth that our core logic operates on. Having two copies of the state does consume some more
+    memory but, overall, this is negligible for us. One downside though, the definition of&nbsp;initialState&nbsp;in
+    TypeScript, is still something we need to manually keep in sync with the&nbsp;State::default()&nbsp;implementation
+    we have in Rust. From there, any updates to the state are kept in sync by the reducers.</p>
+<h3>4. Handle Side Effects</h3>
+<p>We would be done by now, if it weren’t for those side effect
+    descriptors we’ve been carrying around. Remember I said our initial solution used to call Rust functions from Redux
+    thunks? The reason we called those (pure) functions from thunks rather than a reducer was because their result would
+    trigger new side effects. But now that all the Rust code is called strictly inside the reducer, it can’t trigger
+    side effects anymore. At least, not directly.</p>
+<p>So, instead, we let the reducer return side effect&nbsp;<em>descriptors</em>, simple objects not entirely unlike
+    Redux actions. By letting our reducer
+    return these objects, it gains the ability to decide&nbsp;<em>which</em>&nbsp;side effects to
+    trigger, without sacrificing its functional purity.</p>
+<p>Implementation-wise, side effect descriptors are stored in the Redux
+    store like any other state slice. And then we use a custom middleware to trigger the actual effects:</p>
+<div style="height: auto; width: 100%;">
+    <div
+        style="--cb-colors-surface1-light: #ffffff; --cb-colors-surface2-light: #F3F3F3; --cb-colors-surface3-light: #f5f5f5; --cb-colors-clickable-light: #959da5; --cb-colors-base-light: #24292e; --cb-colors-disabled-light: #d1d4d8; --cb-colors-hover-light: #24292e; --cb-colors-accent-light: #24292e; --cb-syntax-color-keyword-light: #d73a49; --cb-syntax-color-property-light: #005cc5; --cb-syntax-color-plain-light: #24292e; --cb-syntax-color-static-light: #032f62; --cb-syntax-color-string-light: #032f62; --cb-syntax-color-definition-light: #6f42c1; --cb-syntax-color-punctuation-light: #24292e; --cb-syntax-color-tag-light: #22863a; --cb-syntax-color-comment-light: #6a737d; --cb-syntax-fontStyle-comment-light: normal; --cb-color-scheme-light: light; --cb-colors-surface1-dark: #ffffff; --cb-colors-surface2-dark: #F3F3F3; --cb-colors-surface3-dark: #f5f5f5; --cb-colors-clickable-dark: #959da5; --cb-colors-base-dark: #24292e; --cb-colors-disabled-dark: #d1d4d8; --cb-colors-hover-dark: #24292e; --cb-colors-accent-dark: #24292e; --cb-syntax-color-keyword-dark: #d73a49; --cb-syntax-color-property-dark: #005cc5; --cb-syntax-color-plain-dark: #24292e; --cb-syntax-color-static-dark: #032f62; --cb-syntax-color-string-dark: #032f62; --cb-syntax-color-definition-dark: #6f42c1; --cb-syntax-color-punctuation-dark: #24292e; --cb-syntax-color-tag-dark: #22863a; --cb-syntax-color-comment-dark: #6a737d; --cb-syntax-fontStyle-comment-dark: normal; --cb-color-scheme-dark: light; position: relative; width: 100%; height: 100%;">
+        <div class="sp-573219155 sp-c-fVPbOs sp-c-fVPbOs-LrWkf-variant-dark sp-wrapper" style="height: 100%;">
+            <div class="sp-c-ikJbEZ sp-layout"
+                style="height: 100%; --sp-layout-height: 100%; --cb-padding: 24px; border-style: solid; border-color: rgb(238, 238, 238); border-width: 1px; border-radius: 16px; transform: unset; overflow: hidden;">
+                <div class="sp-c-euXojQ sp-editor sp-stack" style="letter-spacing: 0em;">
+                    <div class="sp-c-gtcpyq sp-code-editor cb-code-editor">
+                        <pre class="sp-pristine sp-typescript sp-c-jOWzsE sp-c-jkvvao sp-cm" translate="no"><code class="sp-c-fWymNx sp-pre-placeholder" style="margin-left: var(--sp-space-4);"><span class="sp-syntax-keyword">export</span> <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-plain">sideEffectDispatcher</span> =
+    <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">store</span><span class="sp-syntax-punctuation">:</span> Store&lt;RootState<span class="sp-syntax-punctuation">,</span> any&gt;<span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">=&gt;</span> <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">next</span><span class="sp-syntax-punctuation">:</span> any<span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">=&gt;</span> <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">:</span> any<span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">=&gt;</span> <span class="sp-syntax-punctuation">{</span>
+        <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-plain">oldSideEffects</span> = <span class="sp-syntax-plain">store</span>.<span class="sp-syntax-property">getState</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-punctuation">)</span>?.<span class="sp-syntax-property">sideEffects</span><span class="sp-syntax-punctuation">;</span>
+
+        <span class="sp-syntax-comment">// Call the reducers:</span>
+        <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-plain">result</span> = <span class="sp-syntax-definition">next</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">action</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span>
+
+        <span class="sp-syntax-keyword">const</span> <span class="sp-syntax-punctuation">{</span> <span class="sp-syntax-property">sideEffects</span> <span class="sp-syntax-punctuation">}</span> = <span class="sp-syntax-plain">store</span>.<span class="sp-syntax-property">getState</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span>
+        <span class="sp-syntax-keyword">if</span> <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">sideEffects</span> &amp;&amp; <span class="sp-syntax-plain">sideEffects</span> !== <span class="sp-syntax-plain">oldSideEffects</span><span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">{</span>
+            <span class="sp-syntax-comment">// Trigger the side effects:</span>
+            <span class="sp-syntax-keyword">for</span> <span class="sp-syntax-punctuation">(</span><span class="sp-syntax-keyword">const</span> <span class="sp-syntax-plain">descriptor</span> <span class="sp-syntax-keyword">of</span> <span class="sp-syntax-plain">sideEffects</span><span class="sp-syntax-punctuation">)</span> <span class="sp-syntax-punctuation">{</span>
+                <span class="sp-syntax-plain">store</span>.<span class="sp-syntax-property">dispatch</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-definition">thunkForDescriptor</span><span class="sp-syntax-punctuation">(</span><span class="sp-syntax-plain">descriptor</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">)</span><span class="sp-syntax-punctuation">;</span>
+            <span class="sp-syntax-punctuation">}</span>
+        <span class="sp-syntax-punctuation">}</span>
+
+        <span class="sp-syntax-keyword">return</span> <span class="sp-syntax-plain">result</span><span class="sp-syntax-punctuation">;</span>
+    <span class="sp-syntax-punctuation">}</span><span class="sp-syntax-punctuation">;</span></code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p>Here,&nbsp;thunkForDescriptor()&nbsp;is a function that looks a bit
+    like a reducer. It contains a large&nbsp;switch (descriptor.type) { ... }&nbsp;statement that returns the
+    appropriate thunk for every type of side effect.</p>
+<h3>Along came fp-bindgen...</h3>
+<p>You thought we were almost done, didn’t you? Still, there is one more
+    thing to discuss that is central to how we expose our Rust reducers today.</p>
+<p>Remember how I mentioned things were starting to become brittle when
+    we had to manually wire up&nbsp;wasm-bindgen&nbsp;and&nbsp;ts-rs? We still had to write some glue code that often
+    wasn’t type-safe. Now, imagine how that worked out when we had most of our state management and our most important
+    reducers all moved into Rust... Yeah, indeed.</p>
+<p>Meanwhile, our business also had a need for&nbsp;<a href="https://blog.fiberplane.com/fiberplane-providers/"
+        rel="noopener"><strong>full-stack WASM plugins</strong></a>.&nbsp;wasm-bindgen&nbsp;could
+    not support that use case because it assumes a JavaScript host environment, while our servers are all running Rust.
+    So, we created our own bindings generator called&nbsp;<a href="https://github.com/fiberplane/fp-bindgen"
+        rel="noopener">fp-bindgen</a>.</p>
+<p>As we already had quite some experience in integrating these various
+    tools, we made sure&nbsp;fp-bindgencould generate the bindings for our Rust reducers as well. By unifying the
+    tooling, we improved type safety and avoided maintaining hand-written glue code. At the same time, we also made it
+    possible to efficiently pass data between our plugins and the code behind our Redux reducers.</p>
+<p><a href="https://github.com/fiberplane/fp-bindgen" rel="noopener">fp-bindgen</a>&nbsp;is now open-source and we
+    invite you to try it out. If you are interested in full-stack WASM plugins, or you have a need for advanced Rust ↔
+    TypeScript interoperability, this might be for you.</p>
+<h3>Wrapping up</h3>
+<p>Writing Redux Reducers in Rust is not for the faint of heart. There
+    are lots of challenges you may face. And unless you have a clear business case, I would not recommend taking this
+    road lightly. You will have to deal with quite some complexity to get this up and running.</p>
+<p>That said, if you do take this route, you may find Rust to be a
+    remarkably pleasant language to write reducers in:</p>
+<ul
+    style="--framer-font-size: 16px; --framer-text-alignment: start; --framer-text-color: rgb(102, 102, 102); --framer-text-transform: none;">
+    <li data-preset-tag="p">
+        <p>You do not need to worry about accidental mutations, as the
+            Rust compiler will enforce immutability requirements for you.</p>
+    </li>
+    <li data-preset-tag="p">
+        <p>Convenience similar to using&nbsp;<a href="https://immerjs.github.io/immer/" rel="noopener">Immer</a>&nbsp;—
+            an amazing tool — but without even needing a library.</p>
+    </li>
+    <li data-preset-tag="p">
+        <p>General niceties such as if-else expressions and pattern
+            matching.</p>
+    </li>
+</ul>
+<p>Plus you get the benefit of sharing code with your backend, without
+    being tied to Node.js. For us, it’s worth it.</p>
+<p>Should you find yourself in a similar situation to us, we hope you
+    found this helpful.&nbsp;fp-bindgen&nbsp;can be found on GitHub:&nbsp;<a
+        href="https://github.com/fiberplane/fp-bindgen" rel="noopener">fp-bindgen</a>&nbsp;and feel free to join&nbsp;<a
+        href="https://discord.gg/cqdY6SpfVR" rel="noopener">our
+        Discord</a>&nbsp;with any questions you might have!</p>
+<p>And if working on challenges such as these sounds exciting to
+    you,&nbsp;<a href="https://fiberplane.com/careers" rel="noopener">we’re hiring</a>!</p>

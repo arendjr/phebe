@@ -1,0 +1,107 @@
+---
+import { getCollection } from "astro:content";
+import FormattedDate from "../../components/FormattedDate.astro";
+import type { BlogProps } from "../../layouts/BlogPost.astro";
+import Layout from "../../layouts/BlogPost.astro";
+
+type Post = ({ link: string } | { slug: string }) & { data: BlogProps };
+
+const EXTERNAL_POSTS: Array<Post> = [
+    {
+        link: "https://fiberplane.com/blog/a-deep-dive-into-fiberplane-s-operational-transformation",
+        data: {
+            title: "A Deep Dive Into Fiberplane's Operational Transformation",
+            description:
+                "How Fiberplane Notebooks implement Operational Transformation.",
+            pubDate: new Date("2024-02-26"),
+        },
+    },
+    {
+        link: "https://fiberplane.com/blog/why-we-at-fiberplane-use-operational-transformation-instead-of-crdt",
+        data: {
+            title: "Why we at Fiberplane use Operational Transformation instead of CRDT",
+            description:
+                "An overview of what OT and CRDT are and why we chose OT over CRDT.",
+            pubDate: new Date("2023-04-06"),
+        },
+    },
+    {
+        link: "https://fiberplane.com/blog/creating-a-rich-text-editor-using-rust-and-react",
+        data: {
+            title: "Creating a rich text editor using Rust and React",
+            description:
+                "At Fiberplane, we recently encountered an interesting challenge: We were outgrowing the library we were using for our rich text editor.",
+            pubDate: new Date("2022-04-20"),
+        },
+    },
+    {
+        link: "https://fiberplane.com/blog/writing-redux-reducers-in-rust",
+        data: {
+            title: "Writing Redux Reducers in Rust",
+            description:
+                "This post will explore how we integrated this WASM code into a React/Redux application, as well as why we ended up writing our own bindings generator for it.",
+            pubDate: new Date("2022-04-06"),
+        },
+    },
+    {
+        link: "https://fiberplane.com/blog/announcing-fp-bindgen",
+        data: {
+            title: "Announcing fp-bindgen",
+            description:
+                "Today, we're announcing the release of a library for generating bindings for full-stack WASM plugins: fp-bindgen",
+            pubDate: new Date("2022-03-28"),
+        },
+    },
+];
+
+const posts = ((await getCollection("blog")) as Array<Post>)
+    .concat(EXTERNAL_POSTS)
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+function formatLink(post: Post) {
+    if ("link" in post) {
+        return post.link;
+    }
+
+    const {
+        slug,
+        data: { pubDate },
+    } = post;
+    return `/blog/${pubDate.getUTCFullYear()}/${(pubDate.getUTCMonth() + 1).toString().padStart(2, "0")}/${slug}`;
+}
+---
+
+<style>
+    li {
+        margin: 0.3em 0;
+    }
+    .date {
+        color: var(--gray);
+        font-size: 0.8em;
+        text-decoration: none;
+    }
+    .external {
+        color: var(--gray);
+        font-size: 0.6em;
+        text-decoration: none;
+    }
+</style>
+
+<Layout title="Articles">
+    {
+        posts.map(post => (
+            <li>
+                <a
+                    href={formatLink(post)}
+                    target={"link" in post ? "_blank" : undefined}
+                >
+                    <span class="title">{post.data.title}</span>
+                </a>
+                <span class="date">
+                    <FormattedDate date={post.data.pubDate} />
+                </span>
+                {"link" in post && <span class="external">[external]</span>}
+            </li>
+        ))
+    }
+</Layout>
