@@ -39,12 +39,12 @@ there. The trickier part is making something that is actually pleasant to use.
 Just like Bevy UI, I decided to create a flex-inspired layout system. It
 shouldn't really be a surprise, since like many, I have a fair share of web
 experience. I'm not really a fan of CSS though, so when the other blog mentioned
-[Morphism](https://github.com/vizia/morphorm) as being their preferred layout
+[Morphorm](https://github.com/vizia/morphorm) as being their preferred layout
 algorithm, I checked it out and regretted I had not tried it out instead. A
 missed opportunity on my part!
 
 It wasn't a huge loss, since I only needed to implement a flex-like subset that
-was sufficient for a single project. But I like Morphism's simplicity, and I do
+was sufficient for a single project. But I like Morphorm's simplicity, and I do
 hope one day Bevy UI will adopt it or something like it. I didn't try it out
 yet, but I'm particularly intrigued by how they solve respecting aspect ratios
 by allowing you to define width or height using a ratio of the other. (My own
