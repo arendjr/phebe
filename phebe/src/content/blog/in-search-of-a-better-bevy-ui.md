@@ -55,7 +55,7 @@ implement.)
 ### Expressions
 
 That said, there is one thing my own layout system implemented, which I didn't
-see in either Bevy UI or Morphism: The ability to calculate values through
+see in either Bevy UI or Morphorm: The ability to calculate values through
 expressions. Every now and then, you may want to perform a calculation like the
 following:
 
