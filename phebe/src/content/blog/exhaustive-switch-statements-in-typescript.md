@@ -64,3 +64,5 @@ Not only have we saved ourselves from the ugly `break` statements, and replaced 
 Only caveat: If one of the cases in a switch statement has a legit reason for producing `undefined`, the type safety benefit will be lost.
 
 But even then I really like the added elegance of putting switch statements in their own functions. Maybe I could make a [Biome](https://biomejs.dev) rule to enforce this as a pattern? 🤔
+
+Let me know your thoughts on [Mastodon](https://mstdn.social/@arendjr/112099141927078946)!
