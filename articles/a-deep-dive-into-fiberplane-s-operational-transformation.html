@@ -1,0 +1,719 @@
+<h1>Introduction</h1>
+<p>Previously, I’ve written about
+    <a href="https://fiberplane.com/blog/why-we-at-fiberplane-use-operational-transformation-instead-of-crdt"
+        rel="noopener">why we use Operational Transformation at Fiberplane</a>. It’s a complex technology that allows
+    multiple people to edit the same content simultaneously. If you’re not familiar with it yet, I would suggest reading
+    that post first, so you have a bit of an understanding of what it can do.
+</p>
+<p>Today, I will explore our implementation a bit more in-depth, so that you get an understanding of not only how things
+    work, but why things work the way they do.</p>
+<p>If you’re not a programmer, but are simply interested in Operational Transformation and some of the lingo surrounding
+    it, the next section is also for you. After that I’ll switch gears and really dig into our implementation, and I’ll
+    assume familiarity with
+    <a href="https://en.wikipedia.org/wiki/Notebook_interface" rel="noopener">notebook interfaces</a> and
+    <a href="https://en.wikipedia.org/wiki/Client%E2%80%93server_model" rel="noopener">client-server architectures</a>.
+</p>
+<h1>A Primer on Terminology</h1>
+<p>Operational Transformation (OT) is a complex technology, and I will be using quite a bit of specific terminology in
+    this post. Some of those you may have an intuitive understanding of, while others may sound foreign to you. To make
+    sure we’re on the same page, I’ll quickly run through the main terminology with some examples.</p>
+<h2>Strings</h2>
+<p>For any non-programmers reading this, a
+    <em>string</em> is essentially a piece of text, without any formatting or other fancy things.
+    <code>"one three five"</code> is a string, and we’ll use it as a starting point for examples going forward. This
+    particular string has 14 characters, because we count the spaces as well. We have to be exact in how we count
+    things, or subtle bugs (or not so subtle bugs) may occur!
+</p>
+<p>Note the quotes are not part of the string itself, we use those to indicate where the string starts and ends when
+    it’s inside other code.</p>
+<h2>Operations</h2>
+<p>If someone takes the string
+    <code>"one three five"</code> and wants to turn this into
+    <code>"one two three five"</code>, they need to apply an
+    <em>operation</em> to do so. An operation may look like this:
+</p>
+<div>
+    <pre translate="no">
+<div>
+<div aria-live="polite"></div>
+<div tabindex="-1">
+<div spellcheck="false" autocorrect="off" autocapitalize="none" translate="no" contenteditable="false" role="textbox" aria-multiline="true" aria-readonly="true" data-language="javascript" data-gramm="false" data-lt-active="false" aria-label="Code Editor for example.jsx">
+<div>
+<span>ReplaceTextOperation </span>
+<span>{</span></div>
+<div>    offset
+<span>:</span> 
+<span>4</span>
+<span>,</span></div>
+<div>    
+<span>old_text</span>
+<span>:</span> 
+<span>""</span>
+<span>,</span></div>
+<div>    
+<span>new_text</span>
+<span>:</span> 
+<span>"two "</span></div>
+<div>
+<span>}</span></div></div></div></div></pre>
+</div>
+<p>There’s already a few things of note here:</p>
+<ul>
+    <li data-preset-tag="p">
+        <p>We only wanted to
+            <em>insert</em> the text
+            <code>"two "</code>, but we also specified an empty string (
+            <code>""</code>) with text to
+            <em>remove</em>. This allows us to use a single type of operation for insertion, replacement and removal of
+            text.
+        </p>
+    </li>
+    <li data-preset-tag="p">
+        <p>We specified the offset where we want the operation to be applied. We will see in a bit why these offsets are
+            so important.</p>
+    </li>
+</ul>
+<h2>Application</h2>
+<p>The process of
+    <em>applying</em> an operation to go from one state to another is called
+    <em>application</em>.
+</p>
+<p>In these examples we’re using a single string as an example of the state, but in reality we use much more complex
+    data structures, of course. Whenever we introduce new data structures, discovering the best way to apply operations
+    is often a fun challenge 🙂</p>
+<h2>Inversion</h2>
+<p>For the algorithm to work correctly, we must be able to
+    <em>invert</em> every operation. If we invert the above replace text operation, we would get the following inverted
+    operation:
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    offset
+<span>:</span> 
+<span>4</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>"two "</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>""</span>
+
+<span>}</span></code></pre>
+</div>
+<p>Intuitively, the result of the inversion process is an operation that allows you to undo the original operation.</p>
+<h2>Transformation</h2>
+<p>Now we get to the heart of the algorithm. Let’s assume Bob wants to insert
+    <code>"four "</code> into
+    <code>"one three five"</code>. He can do so using this operation:
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    offset
+<span>:</span> 
+<span>10</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>""</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>"four "</span>
+
+<span>}</span></code></pre>
+</div>
+<p>But unbeknownst to him, Alice has already turned the string into
+    <code>"one two three five"</code>. If Bob were to still apply his operation at offset 10, the end result would be
+    far from what he intended! This is a
+    <em>conflict</em>.
+</p>
+<p>To resolve the conflict, Bob needs to transform his operation so it becomes:</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    offset
+<span>:</span> 
+<span>14</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>""</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>"four "</span>
+
+<span>}</span></code></pre>
+</div>
+<p>The OT algorithm does exactly this: It takes one operation, called the successor, then looks at another operation
+    that precedes it (the predecessor), and transforms the successor in such a way that the end result is still what the
+    author of the successor intended.</p>
+<h2>Convergence</h2>
+<p>When two operations can be applied in either order while keeping the end result the same, we say they
+    <em>converge</em>. Operations that don’t conflict always converge, but those that do need transformation to maintain
+    convergence.
+</p>
+<p>Sometimes it is (near) impossible to decide on a consistent end result that would reflect the intent of all parties
+    involved. In situations like that, we may opt to drop an operation. Dropping an operation is really a last resort,
+    since it may discard a user’s changes. Whenever this happens, it’s called non-convergence, and we try to avoid this
+    wherever we can.</p>
+<p>There’s one situation where dropping an operation
+    <em>is</em> acceptable, and also doesn’t lead to non-convergence: When two parties try to apply the exact same
+    operation. After all, when two users perform the same action, unbeknownst of one another, their most likely
+    expectation is that the operation is only performed once. So we can safely drop one. And because the operations were
+    the same anyway, order is also irrelevant here.
+</p>
+<h1>Fiberplane OT</h1>
+<p>With most of the terminology out of the way, you hopefully have some understanding of the basic building blocks it
+    takes to implement Operational Transformation. At Fiberplane, we have built the OT implementation for our
+    <a href="https://docs.fiberplane.com/docs/notebooks" rel="noopener">Notebooks</a> from scratch, using Rust. It’s not
+    open-source, since it sits at the heart of our notebook engine, but you can freely have a peak at
+    <a href="https://github.com/fiberplane/fiberplane/blob/main/fiberplane-models/src/notebooks/operations.rs"
+        rel="noopener">the operation types that we use</a>. There, you’ll find a
+    <code>ReplaceTextOperation</code> type among many others. It looks quite like the example I’ve been using thus far,
+    though it has a bunch of extra fields to indicate where the operation should be applied.
+</p>
+<h2>Cell IDs</h2>
+<p>So far, I had only used an
+    <code>offset</code> field within the operation to identify where in a string a replacement should occur. But our
+    notebooks consist of many types of cells, many of which can also have text. So replace text operations also carry a
+    <code>cell_id</code> that identifies in which cell we’re currently editing the text.
+</p>
+<p>💡 When two replace text operations use different cell IDs, they always converge. This is because editing the text of
+    disjoint cells will never conflict.</p>
+<h2>Fields</h2>
+<p>Some cell types even have multiple fields of text. For those situations, we use a field called
+    <code>field</code>. For instance, table cells even have
+    <em>M x N</em> fields, where M is the number of rows and N is the number of columns. To identify which table field
+    someone is typing in, we use the format
+    <code>{row_id};{column_id}</code>.
+</p>
+<p>💡 Why not use a row_index instead of a row_id, you ask? row_index could have worked as well, since we can transform
+    it the same way we can transform offset for text operations. The reason we use row_id over row_index is that an ID
+    remains stable when other rows are inserted or removed. So unlike an index, an ID is less likely to need
+    transformation. And that’s easier for us.</p>
+<h2>Multi-Cell Selections</h2>
+<p>Sometimes, users select text that starts in one cell and ends in another. If they hit
+    <em>Space</em> when they have a selection like that, all the text from the start of their selection up to the end of
+    the cell, any cells between the starting cell and the ending cell, and the text from the start of the ending cell up
+    to the end of the selection, all of it will be replaced by a single space.
+</p>
+<p>For operations like that, we use the
+    <code>ReplaceCellsOperations</code>. It can insert cells, remove cells, and replace ranges that span cells.
+</p>
+<p>The trickiest parts to understand about the replace cells operations are the fields called
+    <code>split_offset</code> and
+    <code>merge_offset</code>:
+</p>
+<ul>
+    <li data-preset-tag="p">
+        <p>The split offset is the offset at which the first cell in the operation gets split: Everything before the
+            split offset is retained, while the rest is replaced.</p>
+    </li>
+    <li data-preset-tag="p">
+        <p>The merge offset is the offset at which the last cell in the operation gets merged together: Everything
+            before the merge offset is replaced, while the rest is retained.</p>
+    </li>
+</ul>
+<h3>Example</h3>
+<p>
+    <strong>Cells before:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>[</span>
+    
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"one"</span> 
+<span>}</span>
+<span>,</span>
+    
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_two"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"two"</span> 
+<span>}</span>
+<span>,</span>
+    
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_three"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"three"</span> 
+<span>}</span>
+<span>,</span>
+
+<span>]</span></code></pre>
+</div>
+<p>
+    <strong>Operation:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceCellsOperation </span>
+<span>{</span>
+    new_cells
+<span>:</span> 
+<span>[</span>
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>" "</span> 
+<span>}</span>
+<span>]</span>
+<span>,</span>
+    old_cells
+<span>:</span> 
+<span>[</span>
+        
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"e"</span> 
+<span>}</span>
+<span>,</span>
+        
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_two"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"two"</span> 
+<span>}</span>
+<span>,</span>
+        
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_three"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>""</span> 
+<span>}</span>
+    
+<span>]</span>
+<span>,</span>
+    split_offset
+<span>:</span> 
+<span>2</span>
+<span>,</span>
+    
+<span>merge_offset</span>
+<span>:</span> 
+<span>0</span>
+
+<span>}</span></code></pre>
+</div>
+<p>
+    <strong>Cells after:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>[</span>
+    
+<span>TextCell </span>
+<span>{</span> id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span> 
+<span>content</span>
+<span>:</span> 
+<span>"on three"</span> 
+<span>}</span>
+<span>,</span>
+
+<span>]</span></code></pre>
+</div>
+<p>The final content of "cell_one" ends up being "on three". The first two characters ("on") were the cell’s original
+    content before it got split (the split offset is 2). Then follows the content from the new_cells as specified in the
+    operation, which happened to be only a single space. And finally we merge in the remainder of the last cell, which
+    was the entire word "three", because the merge offset is 0.</p>
+<p>💡Pay special note to how the content fields in the operation’s old_cells appear to be truncated. This is because
+    they only include the text after the split offset, and up to the merge offset.</p>
+<h2>Rich-Text Transformation</h2>
+<p>Two other interesting fields you’ll find on the
+    <code>ReplaceTextOperation</code> in our actual data models are the
+    <code>old_formatting</code> and the
+    <code>new_formatting</code>. I’ve written before about our
+    <a href="https://fiberplane.com/blog/creating-a-rich-text-editor-using-rust-and-react" rel="noopener">custom
+        rich-text editor</a>, but in short: Many of our notebook cell types have a
+    <code>formatting</code> field that apply formatting to their text. Or in other words: they turn plain text into rich
+    text.
+</p>
+<p>Our data type for formatting looks like this:</p>
+<div>
+    <pre translate="no">
+<code>
+<span>type </span>
+<span>Formatting</span> = 
+<span>Vec</span>&lt;
+<span>AnnotationWithOffset</span>&gt;
+<span>;</span>
+
+
+<span>struct </span>
+<span>AnnotationWithOffset </span>
+<span>{</span>
+    annotation
+<span>:</span> 
+<span>Annotation</span>
+<span>,</span>
+    
+<span>offset</span>
+<span>:</span> 
+<span>u32</span>
+<span>,</span>
+
+<span>}</span>
+
+
+<span>enum </span>
+<span>Annotation </span>
+<span>{</span>
+    
+<span>StartBold</span>
+<span>,</span>
+    
+<span>EndBold</span>
+<span>,</span>
+    
+<span>StartItalics</span>
+<span>,</span>
+    
+<span>EndItalics</span>
+<span>,</span>
+    
+<span>StartLink</span> 
+<span>{</span> url
+<span>:</span> 
+<span>String</span> 
+<span>}</span>
+<span>,</span>
+    
+<span>EndLink</span>
+<span>,</span>
+    
+<span>/* more like these... */</span>
+
+<span>}</span></code></pre>
+</div>
+<p>Whenever formatting is included in operations, it is important to keep in mind that the offsets we include in the
+    operation are relative to the offset specified there, rather than the start of the cell.</p>
+<h3>Example</h3>
+<p>
+    <strong>Cell before:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>TextCell </span>
+<span>{</span>
+    id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span>
+    
+<span>content</span>
+<span>:</span> 
+<span>"one two three"</span>
+<span>,</span>
+    
+<span>formatting</span>
+<span>:</span> 
+<span>[</span>
+<span>]</span>
+
+<span>}</span></code></pre>
+</div>
+<p>
+    <strong>Operation:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    cell_id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span>
+    
+<span>offset</span>
+<span>:</span> 
+<span>4</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>"two"</span>
+<span>,</span>
+    
+<span>old_formatting</span>
+<span>:</span> 
+<span>[</span>
+<span>]</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>"TWO"</span>
+<span>,</span>
+    
+<span>new_formatting</span>
+<span>:</span> 
+<span>[</span>
+        
+<span>AnnotationWithOffset </span>
+<span>{</span> annotation
+<span>:</span> Annotation
+<span>:</span>
+<span>:</span>
+<span>StartBold</span>
+<span>,</span> 
+<span>offset</span>
+<span>:</span> 
+<span>0</span> 
+<span>}</span>
+<span>,</span>
+        
+<span>AnnotationWithOffset </span>
+<span>{</span> annotation
+<span>:</span> Annotation
+<span>:</span>
+<span>:</span>
+<span>EndBold</span>
+<span>,</span> 
+<span>offset</span>
+<span>:</span> 
+<span>3</span> 
+<span>}</span>
+    
+<span>]</span>
+
+<span>}</span></code></pre>
+</div>
+<p>
+    <strong>Cell after:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>TextCell </span>
+<span>{</span>
+    id
+<span>:</span> 
+<span>"cell_one"</span>
+<span>,</span>
+    
+<span>content</span>
+<span>:</span> 
+<span>"one TWO three"</span>
+<span>,</span>
+    
+<span>formatting</span>
+<span>:</span> 
+<span>[</span>
+        
+<span>AnnotationWithOffset </span>
+<span>{</span> annotation
+<span>:</span> Annotation
+<span>:</span>
+<span>:</span>
+<span>StartBold</span>
+<span>,</span> 
+<span>offset</span>
+<span>:</span> 
+<span>4</span> 
+<span>}</span>
+<span>,</span>
+        
+<span>AnnotationWithOffset </span>
+<span>{</span> annotation
+<span>:</span> Annotation
+<span>:</span>
+<span>:</span>
+<span>EndBold</span>
+<span>,</span> 
+<span>offset</span>
+<span>:</span> 
+<span>7</span> 
+<span>}</span>
+    
+<span>]</span>
+
+<span>}</span></code></pre>
+</div>
+<p>As you can see, the offsets in the resulting cell aren’t the same offsets as were in the operation. They’re
+    calculated using the operation’s offset + each annotation’s offset.</p>
+<p>💡We currently don’t have any operations that can alter the formatting without including the text. Of course, nothing
+    prevents an operation from specifying new_text and old_text that are identical to one another.</p>
+<p>💡What happens if the operation hadn’t specified an EndBold annotation, you ask? Well, then all the text that
+    followed the operation would’ve become bold as well. To keep the complexity of the OT engine in check, we explicitly
+    don’t consider it an OT responsibility to fix the semantics of the annotations. Instead, those concerns are handled
+    by our editor.</p>
+<h1>Resolving Conflicts At Identical Offsets</h1>
+<p>Previously, I mentioned that we try to avoid non-convergence wherever we can. One edge case where this becomes
+    particularly interesting is, what if two people try to insert text at exactly the same offset? Consider the
+    following two operations from Alice and Bob:</p>
+<p>
+    <strong>Alice:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    offset
+<span>:</span> 
+<span>0</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>""</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>"two "</span>
+
+<span>}</span></code></pre>
+</div>
+<p>
+    <strong>Bob:</strong>
+</p>
+<div>
+    <pre translate="no">
+<code>
+<span>ReplaceTextOperation </span>
+<span>{</span>
+    offset
+<span>:</span> 
+<span>0</span>
+<span>,</span>
+    
+<span>old_text</span>
+<span>:</span> 
+<span>""</span>
+<span>,</span>
+    
+<span>new_text</span>
+<span>:</span> 
+<span>"three "</span>
+
+<span>}</span></code></pre>
+</div>
+<p>If we want these operations to converge, we have to pick one that will go first, and transform the other. What will
+    the end result be? Should it be
+    <code>"two three "</code>, or
+    <code>"three two "</code>?
+</p>
+<p>Whenever we are faced with a decision like this, we simply sort the operations by their content using lexicographical
+    order. One is always bigger than the other, because identical operations get dropped. So in this case
+    <code>"three two "</code> is the winner, because
+    <code>"three"</code> comes lexicographically before
+    <code>"two"</code>.
+</p>
+<h1>Rebasing</h1>
+<p>At this point, you’ve seen the building blocks of the OT algorithm, as well as some of the capabilities of things we
+    can do with our OT engine. Now I have one final topic that should hopefully help to connect some of the dots of how
+    all of this comes together in our implementation.</p>
+<p>Whenever someone is typing in a Fiberplane Notebook, the client continuously generates operations that reflect the
+    user’s intention. Those operations are immediately applied to their local client, so they can see their changes
+    instantly. With a slight delay, and some batching under the hood (as well as operation
+    <em>merging</em> — because we really don’t need every individual character typed to be an independent operation),
+    the client sends those operations to our servers.
+</p>
+<p>Whenever one or more operations are sent, the client also tells the server which
+    <em>revision</em> it assigned to those operations. Revisions are simple integers, so whenever a client is on
+    revision
+    <em>X</em>, the next operation it applies gets revision
+    <em>X + 1</em>. If the server was still on revision
+    <em>X</em>, it will accept the operation (after
+    <em>validation</em> — I really could’ve made this post quite a bit longer still 😛) and send an
+    <code>Ack</code> message back to the client. All is good.
+</p>
+<p>But if the server had already accepted a revision
+    <em>X + 1</em> from another client, the server will send a
+    <code>Reject</code> message to the later client, and it becomes the client’s responsibility to
+    <em>rebase</em>.
+</p>
+<p>💡Rebasing could also be done on the server, and it would solve a potential issue with starvation of clients.
+    Starvation can happen when a client gets continuously rejected because other clients are always faster than it. In
+    practice, this hasn’t been an issue for us yet, which is why we opted for the simpler solution for now.</p>
+<p>The term rebasing is directly influenced by
+    <a href="https://git-scm.com/book/en/v2/Git-Branching-Rebasing" rel="noopener">Git</a>, because it follows the same
+    basic idea. For a Fiberplane client, rebasing involves the following steps:
+</p>
+<ul>
+    <li data-preset-tag="p">
+        <p>It first reverts all its locally-applied operations, so it gets back into a state that is consistent with the
+            server. Reverting is done by
+            <em>inverting</em> its local operations, then
+            <em>applying</em> those inverted operations. This is why in our implementation every operation must be
+            invertible.
+        </p>
+    </li>
+    <li data-preset-tag="p">
+        <p>Then it applies the latest operations from the server. This “pulls” its state from an older point in time to
+            the latest revision.</p>
+    </li>
+    <li data-preset-tag="p">
+        <p>Then it
+            <em>transforms</em> its local operations with the newly received operations.
+        </p>
+    </li>
+    <li data-preset-tag="p">
+        <p>Finally, it reapplies its now-transformed local operations.</p>
+    </li>
+</ul>
+<p>After the rebase process, the client can attempt to resubmit its transformed operations. Hopefully, if no other
+    clients were ahead of it again, the server would now acknowledge them, and all is good again.</p>
+<h1>Wrapping up</h1>
+<p>That concludes todays’s deep dive into Fiberplane’s OT implementation. There’s certainly some more topics that could
+    be covered on this subject as well, but hopefully I’ve given you both an understanding of the major parts, as well
+    as some of the challenges you might encounter if you were to implement OT yourself.</p>
+<p>Thanks for reading!</p>
