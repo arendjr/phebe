@@ -18,11 +18,12 @@ that's not how I practice it.
 
 There's a lot of different architectures for different software projects. How do
 you pick the right one? If you're building the next CRUD application, you may
-have an easy time here, but if you're building something more exploratory, the
-decision can be a challenging one. A gamble even. For me, there's certain
-software engineering *principles* I gravitate towards, but I certainly don't
-have a favorite architecture. I don't even particularly like designing an
-architecture. What do I like? I like building products and solving problems.
+have an easy time here, but if you're working in a startup and you're building
+something more exploratory, the decision can be a challenging one. A gamble
+even. For me, there's certain software engineering *principles* I gravitate
+towards, but I certainly don't have a favorite architecture. I don't even
+particularly like designing an architecture. What do I like? I like building
+products and solving problems.
 
 At this point, you might almost start to think architecture isn't really my jam,
 so why did I put it on my resume to begin with? Well, I do have hands-on
@@ -78,7 +79,13 @@ implementing various use cases, after refactorings to make sure it would handle
 future use cases as well as the ones that had come before. A single use case
 should not define an architecture. And at least if you care about exploratory
 development, architecture should not lead product development, it should trail
-it.
+it. First you define your use cases, then you build implementations. And then
+you validate. Architecture comes after.
 
-First you define your use cases, then you build implementations. And then you
-validate. Architecture comes after. That's what I will call post-architecture.
+None of that is to say there are no projects that would benefit from a more
+traditional approach to architecture. If you're doing a waterfall project and/or
+your requirements are well-defined upfront, this post may not really apply to
+you. But for startup environments like the ones I've witnessed, I think this
+approach deserves a word on its own.
+
+This is what I will call Post-Architecture.
