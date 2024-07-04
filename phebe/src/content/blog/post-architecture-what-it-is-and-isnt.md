@@ -2,6 +2,8 @@
 title: "Post-Architecture: What It Is And What It Isn't"
 description: "On the implications of defining the architecture after you build the product -- part II"
 pubDate: "Jul 04 2024"
+mastodon:
+  toot: "112727923803808013"
 ---
 
 After my previous post
