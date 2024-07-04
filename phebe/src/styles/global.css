@@ -3,24 +3,25 @@
 }
 
 html {
+	--background-color: #fff;
+	--contrast-background: #76803630;
 	--link-color: #768036;
 	--inverse-link-color: #eebf58;
 	--gray: #444;
 	--text-color: #111;
 
-	background-color: #fff;
+	background-color: var(--background-color);
 	color: var(--text-color);
 	font-size: max(14pt, 1.3vw);
 }
 
 html.dark {
+	--background-color: #191919;
+	--contrast-background: #eebf5830;
 	--link-color: #eebf58;
 	--inverse-link-color: #768036;
 	--gray: #ccc;
 	--text-color: #fff;
-
-	background-color: #191919;
-	color: var(--text-color);
 }
 
 body {
@@ -81,6 +82,15 @@ h1 {
 p {
 	font-size: 1rem;
 	margin: 1rem 0;
+}
+
+img {
+	width: 50%;
+	height: 50%;
+}
+
+strong {
+	font-weight: bold;
 }
 
 .alternate:nth-child(odd) {

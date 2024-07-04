@@ -54,8 +54,10 @@ const EXTERNAL_POSTS: Array<Post> = [
     },
 ];
 
+const today = new Date();
 const posts = ((await getCollection("blog")) as Array<Post>)
     .concat(EXTERNAL_POSTS)
+    .filter(post => post.data.pubDate < today)
     .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 function formatLink(post: Post) {

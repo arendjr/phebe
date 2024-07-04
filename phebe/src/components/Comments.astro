@@ -1,0 +1,344 @@
+---
+const { toot } = Astro.props;
+
+const tootUrl = `https://mstdn.social/@arendjr/${toot}`;
+
+const indent = "1rem";
+---
+
+<hr />
+<!-- Credits to https://sam.pikesley.org/blog/2023/03/06/mastodon-powered-comments-in-astro/ -->
+
+<noscript>
+    <section>
+        Please enable JavaScript to view the comments powered by Mastodon.
+    </section>
+</noscript>
+
+<div class="comments-container">
+    <section id="mastodon-comments"></section>
+    <p class="comments-info">
+        Comments are generated from replies to <a href={tootUrl} target="_blank"
+            >this Mastodon post</a
+        >. Reply to the post to have your own comment appear.
+    </p>
+</div>
+
+<script define:vars={{ toot: toot, tootUrl: tootUrl, indent: indent }}>
+    const host = "mstdn.social";
+    var commentsLoaded = false;
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function userAccount(account) {
+        return "@" + account.acct.split("@")[0];
+    }
+
+    function makeLink(url) {
+        const link = document.createElement("a");
+        link.setAttribute("rel", "nofollow");
+        link.setAttribute("href", url);
+        link.setAttribute("target", "_blank");
+        return link;
+    }
+
+    function fixEmojis(text, emojis) {
+        const emojiMatcher = /:(\w*):/;
+        const fixed = [];
+
+        text.split(" ").forEach(word => {
+            const match = word.match(emojiMatcher);
+            if (match) {
+                const ourEmoji = emojis.filter(
+                    emoji => emoji["shortcode"] == match[1],
+                )[0];
+
+                const image = document.createElement("img");
+                image.setAttribute("class", "emoji");
+                image.setAttribute("alt", ourEmoji.shortcode);
+                image.setAttribute("src", ourEmoji.static_url);
+
+                fixed.push(image.outerHTML);
+            } else {
+                fixed.push(word);
+            }
+        });
+
+        return fixed.join(" ");
+    }
+
+    function fixTimestamp(timestamp) {
+        return new Date(timestamp).toLocaleString();
+    }
+
+    function clearEl(someDiv) {
+        while (someDiv.firstChild) {
+            someDiv.removeChild(someDiv.firstChild);
+        }
+    }
+
+    function renderToots(toots, in_reply_to, depth) {
+        const tootsToRender = toots.filter(
+            toot => toot.in_reply_to_id === in_reply_to,
+        );
+        tootsToRender.forEach(toot => renderToot(toots, toot, depth));
+    }
+
+    function renderToot(toots, toot, depth) {
+        // avatar
+        const avatarLink = makeLink(toot.account.url);
+        const avatar = document.createElement("img");
+        avatar.setAttribute("src", escapeHtml(toot.account.avatar_static));
+        avatar.setAttribute("class", "mastodon-avatar");
+
+        // use displayname as caption
+        const caption = document.createElement("figcaption");
+        caption.append(
+            fixEmojis(
+                escapeHtml(toot.account.display_name),
+                toot.account.emojis,
+            ),
+        );
+
+        // pack the avater and caption into a figure
+        const avatarFigure = document.createElement("figure");
+        avatarFigure.append(avatar);
+        avatarFigure.append(caption);
+        avatarLink.append(avatarFigure);
+
+        // username span, which also takes the (hidden) avatar
+        const usernameLink = makeLink(toot.account.url);
+        usernameLink.append(userAccount(toot.account));
+        const username = document.createElement("span");
+        username.setAttribute("class", "mastodon-username");
+        username.append(usernameLink);
+        username.append(avatarLink);
+        username.append(" wrote:");
+
+        // timestamp
+        const timedata = document.createElement("time");
+        timedata.append(fixTimestamp(toot.created_at));
+        const tootlink = makeLink(toot.url);
+        tootlink.setAttribute("class", "mastodon-link");
+        tootlink.append(timedata);
+        const timestamp = document.createElement("span");
+        timestamp.setAttribute("class", "mastodon-timestamp");
+        timestamp.append(tootlink);
+
+        // content
+        const content = document.createElement("div");
+        content.setAttribute("class", "mastodon-comment-content");
+        content.innerHTML = toot.content;
+
+        // assemble it all
+        const mastodonComment = document.createElement("article");
+        mastodonComment.setAttribute("class", "mastodon-comment");
+        mastodonComment.setAttribute(
+            "style",
+            `margin-left: calc(${indent} * ${depth})`,
+        );
+
+        // username and timestamp
+        const metadata = document.createElement("span");
+        metadata.setAttribute("class", "mastodon-metadata");
+        metadata.append(username);
+
+        mastodonComment.append(metadata);
+        mastodonComment.append(timestamp);
+        mastodonComment.append(content);
+
+        const fragment = DOMPurify.sanitize(mastodonComment, {
+            RETURN_DOM_FRAGMENT: true,
+        });
+        for (const a of fragment.querySelectorAll("a")) {
+            a.setAttribute("target", "_blank");
+        }
+        for (const p of fragment.querySelectorAll("p")) {
+            p.classList.add("mastodon-comment-paragraph");
+        }
+        document.getElementById("mastodon-comments").appendChild(fragment);
+
+        renderToots(toots, toot.id, depth + 1);
+    }
+
+    function loadComments() {
+        if (commentsLoaded) return;
+
+        const commentsDiv = document.getElementById("mastodon-comments");
+
+        clearEl(commentsDiv);
+        const loadingComments = document.createElement("p");
+        loadingComments.classList.add("comments-info");
+        loadingComments.append("Loading comments from Mastodon");
+        commentsDiv.append(loadingComments);
+
+        fetch(`https://${host}/api/v1/statuses/${toot}/context`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.descendants?.length > 0) {
+                    clearEl(commentsDiv);
+                    renderToots(data["descendants"], toot, 0);
+                } else {
+                    clearEl(commentsDiv);
+
+                    const commentsInfo =
+                        document.querySelector(".comments-info");
+                    clearEl(commentsInfo);
+                    commentsInfo.append("Be the first ");
+                    const link = makeLink(tootUrl);
+                    link.append("to comment");
+                    commentsInfo.append(link);
+                    commentsInfo.append(
+                        ". Reply to the post to have your comment appear.",
+                    );
+                }
+
+                commentsLoaded = true;
+            });
+    }
+
+    function respondToVisibility(element, callback) {
+        const observer = new IntersectionObserver(
+            (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.intersectionRatio > 0) {
+                        callback();
+                    }
+                });
+            },
+            { root: null },
+        );
+
+        observer.observe(element);
+    }
+
+    const comments = document.getElementById("mastodon-comments");
+    respondToVisibility(comments, loadComments);
+</script>
+
+<style is:global>
+    :root {
+        --avatar-width: 10dvw;
+    }
+
+    .comments-container {
+        width: 720px;
+        max-width: 100%;
+        margin: auto;
+        padding: 15px;
+        background-color: var(--contrast-background);
+        border-radius: 5px;
+    }
+
+    .comments-info {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+
+    .mastodon-comment {
+        background-color: var(--background-color);
+        border-radius: 4px;
+        margin-top: 10px;
+        display: grid;
+        grid-template-areas:
+            "metadata timestamp"
+            "content content";
+        grid-template-columns: fit-content auto;
+
+        border-top: 1px solid var(--colour-highlight);
+        padding: 1rem;
+
+        & .mastodon-metadata {
+            grid-area: metadata;
+            border-bottom: 1px dotted var(--contrast-background);
+            font-size: 0.8rem;
+            padding: 0 0 0.3rem;
+        }
+
+        & .mastodon-username {
+            color: var(--gray);
+            position: relative;
+        }
+
+        & .mastodon-username figure {
+            position: absolute;
+            bottom: 0.5rem;
+            left: 0;
+        }
+
+        & .mastodon-username img {
+            max-width: var(--avatar-width);
+            border: 4px solid var(--contrast-background);
+            border-radius: 3px;
+        }
+
+        & .mastodon-username::after {
+            color: var(--colour-highlight);
+        }
+
+        & .mastodon-displayname {
+            display: none;
+        }
+
+        & .mastodon-username figure {
+            visibility: hidden;
+            opacity: 0;
+            transition:
+                visibility 1s,
+                opacity 1s;
+        }
+
+        & .mastodon-username:hover figure {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        & .mastodon-timestamp {
+            grid-area: timestamp;
+            border-bottom: 1px dotted var(--contrast-background);
+            font-size: 0.8rem;
+            padding: 0 0 0.3rem;
+            text-align: right;
+
+            & .mastodon-link {
+                color: var(--gray);
+            }
+        }
+
+        & .mastodon-comment-content {
+            grid-area: content;
+        }
+
+        & .mastodon-comment-paragraph {
+            margin: 0.5rem 0;
+        }
+    }
+
+    figure {
+        margin: 0;
+        position: relative;
+    }
+
+    figcaption {
+        position: absolute;
+        top: 1rem;
+        left: calc(var(--avatar-width) + 1dvw);
+        font-size: 1.2rem;
+        background-color: var(--colour-background);
+        padding: 1rem;
+        visibility: hidden;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        border-top: 1px solid var(--colour-highlight);
+    }
+</style>

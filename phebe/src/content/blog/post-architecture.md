@@ -2,6 +2,9 @@
 title: "Post-Architecture: An Open Approach to Software Engineering"
 description: "On the implications of defining the architecture after you build the product"
 pubDate: "Jun 13 2024"
+updatedDate: "Jul 04 2024"
+mastodon:
+  toot: "112608483780761758"
 ---
 
 For a while I described myself as a software engineer and architect. But the
@@ -89,3 +92,6 @@ you. But for startup environments like the ones I've witnessed, I think this
 approach deserves a word on its own.
 
 This is what I will call Post-Architecture.
+
+**Update:** I've also written a follow-up, in case you want to know more about
+[what Post-Architecture is and isn't](/blog/2024/07/post-architecture-what-it-is-and-isnt).

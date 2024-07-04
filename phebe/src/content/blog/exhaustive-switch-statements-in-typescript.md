@@ -2,6 +2,8 @@
 title: "Writing exhaustive switch statements in TypeScript"
 description: "A little trick that can help make switch statements more type-safe"
 pubDate: "Mar 15 2024"
+mastodon:
+  toot: "112099141927078946"
 ---
 
 As long as [pattern matching](https://github.com/tc39/proposal-pattern-matching) is not yet part of TypeScript, developers sometimes need to get creative to avoid a common pitfall in the language: how do you make sure a switch statement has covered all the variants in a union type?

@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
 import BaseHead from "../components/BaseHead.astro";
+import Comments from "../components/Comments.astro";
 import RssIcon from "../components/RssIcon.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
@@ -8,7 +9,7 @@ import FormattedDate from "../components/FormattedDate.astro";
 
 export type BlogProps = CollectionEntry<"blog">["data"];
 
-const { title, description, pubDate, updatedDate } = Astro.props;
+const { title, description, pubDate, updatedDate, mastodon } = Astro.props;
 ---
 
 <html lang="en">
@@ -41,6 +42,7 @@ const { title, description, pubDate, updatedDate } = Astro.props;
             }
             .last-updated-on {
                 font-style: italic;
+                font-size: 70%;
             }
         </style>
     </head>
@@ -67,6 +69,7 @@ const { title, description, pubDate, updatedDate } = Astro.props;
                     </div>
                     <slot />
                 </div>
+                {mastodon && <Comments {...mastodon} />}
             </article>
         </main>
         <Footer />
