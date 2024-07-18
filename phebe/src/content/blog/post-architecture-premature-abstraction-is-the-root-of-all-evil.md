@@ -2,6 +2,8 @@
 title: "Post-Architecture: Premature Abstraction Is the Root of All Evil"
 description: "Practical tips that allow you to build an evolving architecture"
 pubDate: "Jul 18 2024"
+mastodon:
+  toot: "112806380832819305"
 ---
 
 At this point, I've written a fair bit about Post-Architecture. Previous posts
