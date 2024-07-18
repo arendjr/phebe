@@ -87,8 +87,9 @@ to me. It's just that the reason why it stands out to me in particular is
 _because_ I had been taught C++ in my first year of university. Back then
 object-oriented was all the rage, Java was just released (but it was _slow_,
 best not to go there!) and C++ was the obvious improvement over the primitive
-language called C. The point is, if you started writing a new program, you would
-be _insane_ not to do so using the latest object-oriented insights.
+language called C, which can only do procedural programming. The point is, if
+you started writing a new program, you would be _insane_ not to do so using the
+latest object-oriented insights.
 
 I remember having a discussion on this very topic with my uncle about two
 decades ago, where he proclaimed that all this object-oriented stuff would just
@@ -151,7 +152,8 @@ bar.doFoo("string");
 ```
 
 It would do the exact same thing. No extra code (one line less even), and no
-unnecessary abstraction. So how is the latter worse than the former?
+unnecessary abstraction. So we should ask ourselves the question: Is the latter
+in any way worse than the former?
 
 If you had asked me that question 20 years ago, I might have tried to come up
 with arguments about how the former represented _good design_ because it was
@@ -241,8 +243,8 @@ John Carmack here:
 > [...] No matter what language you work in, programming in a functional style
 > provides benefits. You should do it whenever it is convenient, and you should
 > think hard about the decision when it isn’t convenient.
-
-- Source: https://www.gamedeveloper.com/programming/in-depth-functional-programming-in-c-
+>
+> \- https://www.gamedeveloper.com/programming/in-depth-functional-programming-in-c-
 
 So if you're not using a functional language, say TypeScript, what does it
 mean to use a functional style? I think the main things you should keep as
@@ -253,8 +255,8 @@ guidelines are:
 * Make sure your functions are pure (i.e. don't mutate their inputs or global
   state, or produce other side-effects) wherever feasible.
 
-I guess you could say you'll up with procedural programming with a functional
-flavor. For example:
+I guess you could say you'll end up with procedural programming with a
+functional flavor. For example:
 
 ```ts
 /// BAD: This mutates `input`, which may be unexpected by the caller.
@@ -299,8 +301,8 @@ consider the following quote:
 
 > OO makes code understandable by encapsulating moving parts. FP makes code
 > understandable by minimizing moving parts.
-
-- Source: https://www.johndcook.com/blog/2010/11/03/object-oriented-vs-functional-programming/
+>
+> \- https://www.johndcook.com/blog/2010/11/03/object-oriented-vs-functional-programming/
 
 In this light I would say that if you _can_ minimize the moving parts, you
 should, and a more functional path is probably beneficial. But in some software
@@ -310,15 +312,15 @@ path may be more beneficial instead.
 # Focus On Data Structures Over Code Patterns
 
 It's been a while since I ran into this quote, but it's one that's stuck with me
-and that I would like to repeat here. It's from a person you may know, called
-Linus Torvalds:
+and that I would like to repeat here. It's from a person you may have heard of,
+called Linus Torvalds:
 
 > I will, in fact, claim that the difference between a bad programmer and a good
 > one is whether he considers his code or his data structures more important.
 > Bad programmers worry about the code. Good programmers worry about data
 > structures and their relationships.
-
-- Source: https://lwn.net/Articles/193245/
+>
+> \- https://lwn.net/Articles/193245/
 
 The quote's from 2006, but I remember it because it made me think. Better said,
 it puzzled me. It's been a while, but I remember this post triggering me into
@@ -365,9 +367,10 @@ unnecessary architecture entirely where possible.
 Earlier I wrote that "if you _can_ minimize the moving parts, you should". Maybe
 this raised a simple question: How? Before trying to answer that question, let's
 first clarify what we mean by "moving parts". At least that question has an
-easy answer: Anything that is stateful can be considered a moving part. So to
-minimize moving parts, we should reduce the places where there is statefulness.
-But that can be easier said than done.
+easy answer: Anything that is stateful can be considered a moving part. This
+especially includes I/O, since after all, what is I/O but the exchange of state
+with the outside world? So to minimize moving parts, we should reduce the places
+where there is statefulness. But that can be easier said than done.
 
 Generally though, there's a simple rule to keep in mind: If you want to make a
 system simpler, there's only one place where you can move statefulness: Out. Try
@@ -382,7 +385,25 @@ This pattern of programming is called
 It's a very useful pattern for separating the responsibilies of I/O and state
 management from the pure data flows that handle your internal logic.
 
-But now we are getting to the point where you can hopefully see the reason I
+If you're working with Rust or Python, you may be more likely to have heard of
+the [Sans-IO architecture](https://www.firezone.dev/blog/sans-io), which is a
+variation on the same theme. It's more focused on pushing I/O out, while solving
+the challenges of the remaining state management by using the right data
+structures as part of building an explicit state machine.
+
+If you're more familiar with frontend development, the
+[Redux Toolkit](https://redux-toolkit.js.org/) is a good example of a tool that
+applies pure data flows to client-side state management. By keeping most state
+in a central store, you again reduce the moving parts in your codebase. The
+trick to working with Redux effectively is to try to put most of your logic in
+your reducers, which are pure functions that are very easy to test. The Redux
+store even provides a useful boundary if you ever need to evolve the core logic
+of your client towards a Sans-IO architecture by
+[writing your Redux reducers in Rust](https://fiberplane.com/blog/writing-redux-reducers-in-rust).
+
+# Wrapping Up
+
+By now we are getting to the point where you can hopefully see the reason I
 placed so much emphasis on procedural programming at the beginning of this post.
 At the earliest stages of development, when you're just building your first
 proof-of-concept, you don't want to worry about what is going to be your
@@ -398,13 +419,11 @@ Some codebases may not really have a large functional core inside them, because
 they're intrinsically doing I/O all over the place. Sometimes you have to accept
 that, yet even in such a system you often can find some pure islands.
 
-# Wrapping Up
-
 Ultimately your architecture will be shaped largely by the problem domain that
 you're working in, and that's inevitable. What you do have a hand in however, is
 making sure your architecture will actually reflect that problem domain, with as
 few over-engineered distractions as possible. In order to achieve that, you
-keep things simple, and stick to the basics for as long as you can.
+keep things simple, and stick to the basics where you can.
 
 Don't start out with complex code patterns, or other unnecessary abstractions.
 Don't worry too much about your code, just make sure your data structures are

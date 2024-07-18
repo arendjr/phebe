@@ -5,6 +5,7 @@
 html {
 	--background-color: #fff;
 	--contrast-background: #76803630;
+	--quote-background: #f8ffc830;
 	--link-color: #768036;
 	--inverse-link-color: #eebf58;
 	--gray: #444;
@@ -18,6 +19,7 @@ html {
 html.dark {
 	--background-color: #191919;
 	--contrast-background: #eebf5830;
+	--quote-background: #eebf5810;
 	--link-color: #eebf58;
 	--inverse-link-color: #768036;
 	--gray: #ccc;
@@ -82,6 +84,13 @@ h1 {
 p {
 	font-size: 1rem;
 	margin: 1rem 0;
+}
+
+blockquote {
+	background-color: var(--quote-background);
+	border-left: 4px solid var(--contrast-background);
+	margin: 0;
+	padding: 0.1rem 1rem;
 }
 
 img {
