@@ -31,7 +31,7 @@ to say:
 
 If abstraction is applied too soon in the process, it has a tendency to hinder
 rather than help maintainability. So even though abstraction is regarded as a
-useful tool for maintainbility, it's very much a double-edged sword. Make one
+useful tool for maintainability, it's very much a double-edged sword. Make one
 wrong decision, and you achieve the opposite of what you intended.
 
 Of course I'm not the first to realize this. I'm even not the first to make this
