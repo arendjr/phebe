@@ -401,6 +401,18 @@ store even provides a useful boundary if you ever need to evolve the core logic
 of your client towards a Sans-IO architecture by
 [writing your Redux reducers in Rust](https://fiberplane.com/blog/writing-redux-reducers-in-rust).
 
+It's also no coincidence that Redux itself is inspired by the
+[Elm Architecture](https://guide.elm-lang.org/architecture/), the architecture
+used by the Elm programming language, a functional language widely praised for
+its pleasant developer experience. A quote from the page I just linked:
+
+> This architecture seems to emerge naturally in Elm. Rather than someone
+> inventing it, early Elm programmers kept discovering the same basic patterns
+> in their code. It was kind of spooky to see people ending up with
+> well-architected code without planning ahead!
+
+Sounds familiar?
+
 # Wrapping Up
 
 By now we are getting to the point where you can hopefully see the reason I
