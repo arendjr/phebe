@@ -13,7 +13,7 @@ html {
 
 	background-color: var(--background-color);
 	color: var(--text-color);
-	font-size: max(14pt, 1.3vw);
+	font-size: 14pt;
 }
 
 html.dark {
@@ -35,9 +35,8 @@ body {
 
 main {
 	flex-grow: 1;
-	margin: 0 14% 0 6%;
 	max-width: 80%;
-	padding: 4rem;
+	padding: 4rem 14%;
 	word-break: break-word;
 }
 
