@@ -181,3 +181,6 @@ post-architecture. Some more technical guidance so to say.
 I have taken my time explaining the abstract, so that hopefully the technical
 advice can be placed in the right context. But more technical advice _is_
 coming... in the next post in this series. Stay tuned!
+
+**Update:** The next post in this series is here:
+[Post-Architecture: Premature Abstraction Is the Root of All Evil](/blog/2024/07/post-architecture-premature-abstraction-is-the-root-of-all-evil/).

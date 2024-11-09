@@ -93,5 +93,6 @@ approach deserves a word on its own.
 
 This is what I will call Post-Architecture.
 
-**Update:** I've also written a follow-up, in case you want to know more about
+**Update:** I've also written two follow-ups, in case you want to know more about
 [what Post-Architecture is and isn't](/blog/2024/07/post-architecture-what-it-is-and-isnt).
+Or for a more techncial perspective, jump straight to [Post-Architecture: Premature Abstraction Is the Root of All Evil](/blog/2024/07/post-architecture-premature-abstraction-is-the-root-of-all-evil/).
