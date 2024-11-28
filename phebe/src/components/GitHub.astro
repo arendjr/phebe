@@ -1,0 +1,33 @@
+---
+const { url } = Astro.props;
+---
+
+<hr />
+<div class="github-container">
+    <p class="github-info">
+        This post was originally <a href={url} target="_blank"
+        >posted on GitHub</a>.
+    </p>
+</div>
+
+<style is:global>
+    .github-container {
+        width: 720px;
+        max-width: 100%;
+        margin: auto;
+        padding: 15px;
+        background-color: var(--contrast-background);
+        border-radius: 5px;
+    }
+
+    .github-info {
+        margin: 0.5rem 0;
+        text-align: center;
+    }
+
+    hr {
+        border: 0;
+        height: 1px;
+        border-top: 1px solid var(--colour-highlight);
+    }
+</style>
