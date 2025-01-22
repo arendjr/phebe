@@ -8,6 +8,15 @@ type Post = ({ link: string } | { slug: string }) & { data: BlogProps };
 
 const EXTERNAL_POSTS: Array<Post> = [
     {
+        link: "https://biomejs.dev/blog/roadmap-2025/",
+        data: {
+            title: "Roadmap 2025 and Biome 2.0",
+            description:
+                "A look at what 2025 will bring for us: Biome 2.0, enterprise support, and our roadmap.",
+            pubDate: new Date("2025-01-22"),
+        },
+    },
+    {
         link: "https://fiberplane.com/blog/a-deep-dive-into-fiberplane-s-operational-transformation",
         data: {
             title: "A Deep Dive Into Fiberplane's Operational Transformation",
