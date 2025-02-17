@@ -3,7 +3,7 @@ title: "New Monarchy: A Rethinking of the Values of Democracy"
 description: "New Monarchy is based on a union of districts, each governed by a monarchy. Monarchies are constrained by a constitution to guarantee citizen rights, including the right to depose unjust or unfit rulers, while districts are sworn to protect each other's constitution."
 pubDate: "Feb 17 2025"
 mastodon:
-  toot: ""
+  toot: "114017885242837620"
 ---
 
 **Democracy was a failed system. It was merely better than all the other systems.**
