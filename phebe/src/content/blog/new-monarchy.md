@@ -238,7 +238,7 @@ At first glance, while this leaves some open questions, it does appear these sho
 
 Perhaps one of the rights most infringed upon by the New Monarchy, is a right we have not yet discussed: The right to self-determination.
 
-The right to self-determination means that people have the right to determine their own governance. It is considered fundamental in democracies, this right does not exist in the New Monarchy because the citizens have no direct say in their own government. But is this really true? And if it is, how problematic is this?
+The right to self-determination means that people have the right to determine their own governance. It is considered fundamental in democracies, but this right does not exist in the New Monarchy because the citizens have no direct say in their own government. But is this really true? And if it is, how problematic is this?
 
 First it can be argued that citizens *do* have *some* say in their own government. After all, they can depose their own rulers. This may not appear to be much, but it is something that monarchs will naturally try to avoid. In trying to avoid it, monarchs would be inclined to gauge the will of the citizenry, so they can appease them. It is indeed not real self-determination, but the will of the people will still determine the course of government to some extent.
 
