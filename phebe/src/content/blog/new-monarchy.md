@@ -172,7 +172,7 @@ Given that citizens have no right to elect, it could very well happen that they 
 
 If this appears as a "bribe" to vote in favour of the monarchs, do consider that a slow turnover of monarchs is very much an intended effect in the New Monarchy. Voting to depose a ruler should be the exception rather than a common occurrence, thereby ensuring longevity in government policy and general stability.
 
-The intention of deposal being the exception is also what enables the relatively short turnaround time of having a yearly vote. Yearly votes are not intended to be an instrument for yearly changes; longterm rule should be the norm. But having a vote every year serves as a powerful remainder to the monarchy to keep fulfilling their role, and it allows the citizenry to step in relatively quickly when the situation demands it.
+The intention of deposal being the exception is also what enables the relatively short turnaround time of having a yearly vote. Yearly votes are not intended to be an instrument for yearly changes; longterm rule should be the norm. But having a vote every year serves as a powerful reminder to the monarchy to keep fulfilling their role, and it allows the citizenry to step in relatively quickly when the situation demands it.
 
 Voting must always be anonymous and any financial incentives may not come with a suggestion of what to vote.
 
