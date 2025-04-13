@@ -1,0 +1,24 @@
+name: Build and upload
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: yarn && yarn build
+        working-directory: ./phebe
+      - name: SFTP upload
+        uses: Dylan700/sftp-upload-action@latest
+        with:
+          server: 5.254.117.44
+          username: upload@arendjr.nl
+          password: ${{secrets.UPLOAD_PW}}
+          port: 22
+          uploads: |
+            ./phebe/dist => ./
