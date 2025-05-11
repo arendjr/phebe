@@ -320,7 +320,7 @@ own challenges.
 
 > _"You're finally getting to the interesting stuff, aren't you?"_
 
-I guess that depends, if like me, you're a nerd for the technical nitty gritty,
+I guess that depends. If like me, you're a nerd for the technical nitty gritty,
 yeah, we're getting there :)
 
 In Biome, the most basic data structure for type information is a giant `enum`,
@@ -392,7 +392,7 @@ choosing to use type references, they have other advantages too:
   types in a linear vector. This improves data locality, and with it,
   performance.
 * Storing type data in a vector also makes it more convenient to see which types
-  have been registered, which in turn helps debugging and test snapshots.
+  have been registered, which in turn helps with debugging and test snapshots.
 * Not having to deal with recursive data structures made some of our algorithms
   easier to reason about as well. If we want to perform some action on every
   type, we just run it on the vector instead of needing to traverse a graph
@@ -418,7 +418,7 @@ enum TypeReference {
 ```
 
 There isn't a singular answer to how type references work. The reason for this
-is that _type resolution_, the process of resolving type references, work in
+is that _type resolution_, the process of resolving type references, works in
 multiple phases. 
 
 Biome recognises three levels of type inference, and has different resolution
@@ -566,6 +566,36 @@ entirely feasible to imagine a type resolver that _does_ cache the results of
 our full inference. Such a resolver would be very hard to get right for our
 language server, where modules may be updated at any time, but it might work
 very well for our CLI where we can assume this doesn't happen.
+
+### Flattening
+
+Apart from type resolution, there's one other, last important piece to type\
+inference: _type flattening_.
+
+Let's look at the `a + b` expression again. After local inference, it was
+interpreted as this:
+
+```rs
+TypeData::TypeofExpression(TypeofExpression::Addition {
+    left: TypeReference::from(TypeReferenceQualifier::from_path("a")),
+    right: TypeReference::from(TypeReferenceQualifier::from_path("b"))
+})
+```
+
+But at some point, supposedly one of the resolvers is going to be able to
+resolve `a` and `b`, and the expression becomes something such as:
+
+```rs
+TypeData::TypeofExpression(TypeofExpression::Addition {
+    left: TypeReference::from(ResolvedTypeId(/* resolver ID and type ID */)),
+    right: TypeReference::from(ResolvedTypeId(/* resolver ID and type ID */))
+})
+```
+
+At this point we know the actual types we are dealing with. If the types for
+both `left` and `right` resolve to `TypeData::Number`, the entire expression can
+be _flattened_ to `TypeData::Number`, because that's the result of adding two
+numbers. And in most other cases it will become `TypeData::String` instead.
 
 ## What's Next
 
