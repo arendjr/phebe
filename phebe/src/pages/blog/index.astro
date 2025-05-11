@@ -8,6 +8,15 @@ type Post = ({ link: string } | { slug: string }) & { data: BlogProps };
 
 const EXTERNAL_POSTS: Array<Post> = [
     {
+        link: "https://biomejs.dev/blog/vercel-partners-biome-type-inference/",
+        data: {
+            title: "Biome partners with Vercel to improve type inference",
+            description:
+                "Biome partners with Vercel to futher our type inference efforts",
+            pubDate: new Date("2025-04-02"),
+        },
+    },
+    {
         link: "https://biomejs.dev/blog/roadmap-2025/",
         data: {
             title: "Roadmap 2025 and Biome 2.0",
