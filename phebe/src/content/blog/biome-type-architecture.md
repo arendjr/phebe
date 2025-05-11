@@ -28,7 +28,7 @@ Nowadays, if you are familiar with the JavaScript scene, you probably recognise
 this simple reality: If you want type safety, you turn to TypeScript. TypeScript
 is like JavaScript, but with types.
 
-So what does it mean when we say TypeScript has types, doesn't JavaScript have
+So what does it mean when we say TypeScript has types? Doesn't JavaScript have
 types too?
 
 And yes, it does. JavaScript has types too. JavaScript even has a `typeof`
@@ -43,9 +43,9 @@ I'll illustrate both with an example.
 
 ### Type Annotations
 
-So the first thing TypeScript does that JavaScript doesn't is to provide the
-ability to annotate variables and parameters with the _type_ they expect. Take
-this code, for example:
+The first thing TypeScript does that JavaScript doesn't is to provide the
+ability to annotate variables and parameters with the _type_ they expect. Let's
+first look at an example _without_ type annotations:
 
 ```js
 function greet(subject) {
@@ -67,10 +67,11 @@ console:
 Well, indeed. The type of `'World'` is a `string`.
 
 But when we look at the function signature of `greet`, this is not exactly
-obvious. We can look at the _body_ of the function, look at the `console.log()`
-statement, and understand that yes, `subject` is being used to display part of
-a `string` message. And while in this example, that's not exactly rocket
-science, imagine if `greet` had been 10 or 20, or even a 100 lines long.
+obvious. We can look at the _body_ of the function, then look at the
+`console.log()` statement, and understand that yes, `subject` is being used to
+display part of a `string` message. And while in this example, that's not
+exactly rocket science, imagine if `greet` had been 10 or 20, or even a 100
+lines long.
 
 We don't want to look at function bodies to understand what type a parameter
 has, we want it laid out for us. That's why TypeScript allows us to write:
@@ -102,7 +103,7 @@ The computer in this case is `tsc`, or the TypeScript Compiler. While TypeScript
 is a language, which dictates us what we can and can't do, it's the compiler
 that enforces that we follow the rules.
 
-So what happens if we were to call `greet` like this?
+So what happens if we were to call `greet` like this instead:
 
 ```ts
 greet(1);
@@ -136,19 +137,21 @@ But what about `1 + ' ounce'`?
 
 See where we're going here?
 
+> *Reader nods understandingly.*
+
 Thankfully, even though the results are not always intuitive, JavaScript defines
-pretty well what each type of expression should evaluate to. For operators, such
+pretty well what each kind of expression should evaluate to. For operators, such
 as `+`, we can find references what every combination of operands should
 evaluate to.
 
 But what about `myFunction()`? This is what we call a _call expression_, and it
 means it will call the function `myFunction`, and it will evaluate to the result
-of the function.
+of that function.
 
 JavaScript has no way of knowing what `myFunction()` evaluates to, unless it's
 a predefined function written down in some standard. But assuming `myFunction`
 is defined in someone's own codebase, the answer to what `myFunction()`
-evaluates to should be sought there as well.
+evaluates to should be sought in that codebase as well.
 
 TypeScript's annotations make this easier again. Assume the following function
 signature:
@@ -204,15 +207,16 @@ Type annotations, on the other hand, are a tool to make type inference _easier_,
 not harder. Type inference can be performed on arbitrary JavaScript expressions.
 Having annotations just makes it easier, although admittedly, supporting all the
 type system features of TypeScript does add complexity again. But the basics of
-TypeScript are pretty well-defined at this point, even if it lacks an official
+TypeScript are pretty well defined at this point, even if it lacks an official
 specification.
 
 And because Biome is a linter, not a type checker, it doesn't require 100%
 compatibility to achieve value to its users. Seen in the context of rules such
-as `noFloatingPromises`, if Biome can infer 80% of the instances where a
-floating promise would occur, it can offer 80% of the value such a rule could
-theoretically provide. And to put things into perspective, not even the
-TypeScript Compiler can offer
+as
+[`noFloatingPromises`](https://next.biomejs.dev/linter/rules/no-floating-promises/),
+if Biome can infer 80% of the instances where a floating promise would occur, it
+can offer 80% of the value such a rule could theoretically provide. And to put
+things into perspective, not even the TypeScript Compiler can offer
 [100% correctness](https://github.com/microsoft/TypeScript/wiki/TypeScript-Design-Goals#non-goals)
 here.
 
@@ -281,18 +285,20 @@ for CLI usage. Development servers may have an interest in optimising hot-reload
 performance as well, but they tend to do so by pushing responsibility to the
 client instead of rebuilding their bundles faster.
 
-For Biome, priorities are different: If a user changes file A, they want file B
-to update its diagnostics regardless of whether it has dependencies on file A or
-not. Updates need to happen near-instantaneously, and there's no client to
-offload responsibility to.
+For Biome, priorities are different: If a user changes file A, they want the
+diagnostics for file B to update in their IDE regardless of whether it has
+dependencies on file A or not. Updates need to happen near-instantaneously, and
+the IDE is not a client we can offload responsibility to.
 
 ### Module Graph
 
-Biome's type architecture is built upon Biome's module graph. The module graph
-is effectively just a [fancy hash map](https://github.com/ibraheemdev/papaya/)
-that contains entries for every module (every JS/TS file in a repository),
-including metadata such a which other modules that module depends on, which
-symbols it exports, and yes, also which types it contains.
+Biome's _module graph_ is central to our multi-file support and is designed with
+these considerations in mind. And our type architecture is built upon this
+module graph. The module graph is effectively just a
+[fancy hash map](https://github.com/ibraheemdev/papaya/) that contains entries
+for every module (every JS/TS file in a repository), including metadata such as
+which other modules that module depends on, which symbols it exports, and yes,
+also which types it contains.
 
 The key constraint the module graph operates under is this: No module may copy
 or clone data from another module, not even if that data is behind an
@@ -336,17 +342,17 @@ enum TypeData {
 }
 ```
 
-There's many variants there to cover all the different kinds of types that can
-are supported by TypeScript, but a few are specifically interesting to mention
-here:
+This enum has many different variants in order to cover all the different kinds
+of types that are supported by TypeScript. But a few are specifically
+interesting to mention here:
 
 * `TypeData::Unknown` is important because our implementation of type inference
   is only a partial implementation. Whenever something is not implemented, we
-  default to `Unknown` to indicate that well, the type is unknown. This is
-  practically identical to the `unknown` keyword that exists as well, but we do
-  have a separate `TypeData::UnknownKeyword` variant for that so that we can
-  distinguish between situations where our inference falls short versus
-  situations we _can't_ infer because the user explicitly used `unknown`.
+  default to `Unknown` to indicate that, well, the type is unknown. This is
+  practically identical to the `unknown` keyword that exists in TypeScript, but
+  we do have a separate `TypeData::UnknownKeyword` variant for that so that we
+  can distinguish between situations where our inference falls short versus
+  situations where we _can't_ infer because the user explicitly used `unknown`.
   They're semantically identical, so the difference is only for measuring the
   effectiveness of our inference.
 * Complex types such as `TypeData::Function` and `TypeData::Object` carry extra
@@ -416,7 +422,7 @@ is that _type resolution_, the process of resolving type references, work in
 multiple phases. 
 
 Biome recognises three levels of type inference, and has different resolution
-resolution phases to support those...
+phases to support those...
 
 #### Local Inference
 
@@ -530,7 +536,7 @@ That may sound worse than it is though. As of today, the implementations are:
   information about a module, and for performing our module-level inference.
 * **`JsModuleInfo`**. Once the `JsModuleInfoCollector` has done its job, a
   `JsModuleInfo` instance is created, which is stored as an entry in our module
-  graph. But this data structure also implement `TypeResolver` so that our full
+  graph. But this data structure also implements `TypeResolver` so that our full
   inference can access the module's types too.
 * **`ScopedResolver`**. This is the one that is responsible for our actual full
   inference. Its named as it is because it is the only resolver that can really
