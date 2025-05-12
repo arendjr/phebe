@@ -446,8 +446,8 @@ useful:
 
 ```rs
 TypeData::TypeofExpression(TypeofExpression::Addition {
-    left: TypeReference::from(TypeReferenceQualifier::from_path("a")),
-    right: TypeReference::from(TypeReferenceQualifier::from_path("b"))
+    left: TypeReference::from(TypeReferenceQualifier::from_name("a")),
+    right: TypeReference::from(TypeReferenceQualifier::from_name("b"))
 })
 ```
 
@@ -511,7 +511,7 @@ which point it becomes a `TypeReference::Resolved` variant again.
 
 Today, results from our full inference cannot be cached for the same reason
 we've seen before: Such a cache would get stale the moment a module is replaced,
-and we don't wan't to have complex cache invalidation schemes. But we may have
+and we don't want to have complex cache invalidation schemes. But we may have
 one more trick up our sleeve...
 
 > _"Hey, do tell! What's the trick?"_
@@ -543,7 +543,7 @@ That may sound worse than it is though. As of today, the implementations are:
   graph. But this data structure also implements `TypeResolver` so that our full
   inference can access the module's types too.
 * **`ScopedResolver`**. This is the one that is responsible for our actual full
-  inference. Its named as it is because it is the only resolver that can really
+  inference. It's named as it is because it is the only resolver that can really
   resolve things in any arbitrary scope. Compare this to the
   `JsModuleInfoCollector` which only cares about the global scope of a module,
   because at least so far that's all we need to determine types of exports
@@ -581,8 +581,8 @@ interpreted as this:
 
 ```rs
 TypeData::TypeofExpression(TypeofExpression::Addition {
-    left: TypeReference::from(TypeReferenceQualifier::from_path("a")),
-    right: TypeReference::from(TypeReferenceQualifier::from_path("b"))
+    left: TypeReference::from(TypeReferenceQualifier::from_name("a")),
+    right: TypeReference::from(TypeReferenceQualifier::from_name("b"))
 })
 ```
 
