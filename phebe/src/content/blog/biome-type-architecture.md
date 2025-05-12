@@ -1,7 +1,7 @@
 ---
 title: "Biome Type Inference: A Look Behind The Scenes"
 description: "An in-depth exploration of the architecture powering Biome's type inference."
-pubDate: "May 12, 2099"
+pubDate: "May 12, 2025"
 mastodon:
   toot: ""
 ---
