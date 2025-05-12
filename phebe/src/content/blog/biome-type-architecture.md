@@ -286,8 +286,8 @@ performance as well, but they tend to do so by pushing responsibility to the
 client instead of rebuilding their bundles faster.
 
 For Biome, priorities are different: If a user changes file A, they want the
-diagnostics for file B to update in their IDE regardless of whether it has
-dependencies on file A or not. Updates need to happen near-instantaneously, and
+diagnostics for file B to update in their IDE, regardless of whether it has
+dependencies on file A. Updates need to happen near-instantaneously, and
 the IDE is not a client we can offload responsibility to.
 
 ### Module Graph
@@ -311,9 +311,9 @@ modules were to copy each other's data.
 
 Some other tools use complex systems to track dependencies between modules, both
 explicit dependencies as well as implicit ones, so they can do very granular
-cache invalidation. With Biome we're trying radical simplicity instead: Just
+cache invalidation. With Biome we're trying radical simplicity instead: just
 make sure we don't have such dependencies between entries in our module graph.
-So far, that appears to be working well enough, but naturally it comes with its
+So far, that appears to be working well enough, but naturally, it comes with its
 own challenges.
 
 ### Type Data Structures
@@ -343,7 +343,7 @@ enum TypeData {
 ```
 
 This enum has many different variants in order to cover all the different kinds
-of types that are supported by TypeScript. But a few are specifically
+of types that TypeScript supports. But a few are specifically
 interesting to mention here:
 
 * `TypeData::Unknown` is important because our implementation of type inference
@@ -395,7 +395,7 @@ choosing to use type references, they have other advantages too:
   have been registered, which in turn helps with debugging and test snapshots.
 * Not having to deal with recursive data structures made some of our algorithms
   easier to reason about as well. If we want to perform some action on every
-  type, we just run it on the vector instead of needing to traverse a graph
+  type, we just run it on the vector instead of traversing a graph
   while tracking which parts of the graph have already been visited.
 
 ### Type Resolution Phases
