@@ -31,9 +31,9 @@ is like JavaScript, but with types.
 So what does it mean when we say TypeScript has types? Doesn't JavaScript have
 types too?
 
-And yes, it does. JavaScript has types too. JavaScript even has a `typeof`
-operator that can tell us the type of any given value. So what is it really that
-sets TypeScript apart from JavaScript?
+And yes, JavaScript does have types. It even has a `typeof` operator that can
+tell us the type of any given value. So what is it really that sets TypeScript
+apart from JavaScript?
 
 Well, two things:
 * TypeScript can _annotate_ type expectations.
@@ -531,7 +531,11 @@ That may sound worse than it is though. As of today, the implementations are:
 
 * **`HardcodedSymbolResolver`**. This one is purely for test purposes.
 * **`GlobalsResolver`**. This is the one that is responsible for resolving
-  globals such as `Promise` and `Array`.
+  globals such as `Promise` and `Array`. The way we do this is still rather
+  primitive with hardcoded, predefined symbols. At some point we probably should
+  be able to use TypeScript's own global `.d.ts` files, such as
+  [es2023.array.d.ts](https://github.com/microsoft/TypeScript/blob/main/src/lib/es2023.array.d.ts),
+  directly.
 * **`JsModuleInfoCollector`**. This one is responsible for collecting
   information about a module, and for performing our module-level inference.
 * **`JsModuleInfo`**. Once the `JsModuleInfoCollector` has done its job, a
@@ -619,12 +623,41 @@ But looking at the bright side, we're only 6 weeks in, and we clearly know where
 to go next: At this moment the limiting factor isn't even our _type_ resolution,
 it's our _import_ resolution.
 
+And thankfully, that's not the only thing we're doing either. Our core
+contributor [Siketyan](https://github.com/siketyan) has already implemented a
+new
+[`useExhaustiveSwitchCases`](https://next.biomejs.dev/linter/rules/use-exhaustive-switch-cases/)
+rule too, improving some of our inference in the process. Such efforts reinforce
+one another, and as we attract more people working on these type-informed rules,
+our inference only stands to become better and better.
+
 ## Wrapping Up
 
 > _"Thanks. I thought you were never getting there."_
 
 Thank you for reading all this way. Hopefully this has provided an informative
-look behind the scenes on Biome's type inference.
+look behind the scenes on Biome's type inference. I'll get back to hacking on
+our type inference and our import resolution :)
 
-If you have any questions, feel free to leave a comment here. Or reach out to us
-on [our Discord](https://biomejs.dev/chat) in the `#type-inference` channel.
+> _"Before you go, I have one question: Do you think Biome will ever implement
+type_ checking _too?"_
+
+Heh, that's a great question! To be honest, it's hard to give a definitive
+answer, because I can't look into the future. What I can say is that it is
+certainly outside the scope of my current contract.
+
+That said, there is a rather natural path towards implementing type checking
+too. TypeScript has _conditional types_, which look something like
+`A extends B ? C : D` and which can be read as: If type A can be assigned to
+type B, use type C, otherwise use D. And that condition is awefully close to
+type _validation_. And if we have type validation, we're awefully close to
+becoming a type _checker_ as well.
+
+So, who knows, we may venture into type checking territory some day. But
+remember that full compatibility with `tsc` is a rather elusive goal for any
+type checker, so please temper your expectations and keep in mind you will
+definitely still be using `tsc` for the foreseeable future.
+
+Thanks again for reading! And if you have any other questions, feel free to
+leave a comment here. Or reach out to us on
+[our Discord](https://biomejs.dev/chat) in the `#type-inference` channel.
