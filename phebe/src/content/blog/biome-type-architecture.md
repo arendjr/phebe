@@ -3,7 +3,7 @@ title: "Biome Type Inference: A Look Behind The Scenes"
 description: "An in-depth exploration of the architecture powering Biome's type inference."
 pubDate: "May 12, 2025"
 mastodon:
-  toot: ""
+  toot: "114495322921949004"
 ---
 
 A little over a month ago, Biome [announced](https://biomejs.dev/blog/vercel-partners-biome-type-inference/) their partnership to work with
